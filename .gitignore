@@ -1,0 +1,116 @@
+# ==============================================================================
+# Git Ignore Configuration: AI-Powered Sustainable Transportation Advisor
+# ==============================================================================
+
+# Virtual Environments
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# Python Environment & Secrets
+.env
+*.env
+.env.*
+secrets.json
+credentials.json
+
+# Local MLflow Run Store & Artifacts
+# Note: Local experiment run logs, artifacts, and SQLite tracking DBs are generated
+# during model training and must NOT be committed to git.
+mlruns/
+.mlflow/
+mlartifacts/
+
+# Model Binaries & Serialized Artifacts
+# Models should be tracked via MLflow Model Registry / DVC, not committed to git.
+models/*.pkl
+models/*.joblib
+models/*.onnx
+models/*.pt
+models/*.h5
+*.pkl
+*.joblib
+
+# Large Outputs & Visualizations
+outputs/*
+!outputs/.gitkeep
+!outputs/README.md
+
+# Large Datasets & Storage Safeguards
+# Keep directory structure via README / .gitkeep, but ignore all raw/interim/processed data files.
+data/raw/*
+!data/raw/README.md
+!data/raw/.gitkeep
+
+data/interim/*
+!data/interim/README.md
+!data/interim/.gitkeep
+
+data/processed/*
+!data/processed/README.md
+!data/processed/.gitkeep
+
+# SQLite database files (Delhi GPS data archives are daily SQLite DBs)
+*.db
+*.sqlite
+*.sqlite3
+
+# Archives
+*.zip
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# DVC (Data Version Control)
+# DO NOT ignore DVC configuration and tracking pointer files.
+# Explicitly ignore internal DVC local caches.
+.dvc/cache/
+.dvc/tmp/
+.dvc/config.local
+
+# IDE and Editor configurations
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Operating System Files
+Thumbs.db
+[Dd]esktop.ini
+.DS_Store
+$RECYCLE.BIN/

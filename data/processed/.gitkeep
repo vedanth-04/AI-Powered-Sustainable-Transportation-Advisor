@@ -1,0 +1,2 @@
+# Placeholder to preserve data/processed/ directory structure in Git
+# Processed datasets ready for modeling are ignored by .gitignore and should be tracked via DVC.
