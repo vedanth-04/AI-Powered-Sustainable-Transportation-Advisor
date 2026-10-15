@@ -71,14 +71,20 @@ outputs/*
 data/raw/*
 !data/raw/README.md
 !data/raw/.gitkeep
+!data/raw/*.dvc
+!data/raw/.gitignore
 
 data/interim/*
 !data/interim/README.md
 !data/interim/.gitkeep
+!data/interim/*.dvc
+!data/interim/.gitignore
 
 data/processed/*
 !data/processed/README.md
 !data/processed/.gitkeep
+!data/processed/*.dvc
+!data/processed/.gitignore
 
 # SQLite database files (Delhi GPS data archives are daily SQLite DBs)
 *.db
