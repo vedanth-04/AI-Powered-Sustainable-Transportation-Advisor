@@ -1,0 +1,5 @@
+[core]
+    remote = teamstorage
+['remote "teamstorage"']
+    url = s3://dvc
+    endpointurl = https://dagshub.com/vedanth-04/AI-Powered-Sustainable-Transportation-Advisor.s3
