@@ -116,3 +116,58 @@ pip list
 # 4. Run tests
 pytest
 ```
+
+---
+
+## 7. Reproducible Pipeline & Execution Guide
+
+All phases from raw SQLite ingestion to model evaluation and MLflow registration can be reproduced using modular CLI commands:
+
+### Step 1: Download / Verify Sample Database
+```powershell
+python src/data/download_sample.py
+```
+*Retrieves and verifies the July 1, 2019 SQLite database (`data/raw/2019-07-01.db`, 184.46 MB) from Zenodo.*
+
+### Step 2: Clean Trajectories & Construct Target Labels
+```powershell
+python -m src.features.build_labels
+```
+*Applies deduplication, GPS jump filtering (>80 km/h), trajectory gap segmentation (>300s), and sub-second gate crossing interpolation. Generates `data/processed/traversals.csv` (152 ground-truth traversals).*
+
+### Step 3: Build Leakage-Safe Features
+```powershell
+python -c "import pandas as pd; from src.features.build_features import engineer_features; df = pd.read_csv('data/processed/traversals.csv'); engineer_features(df).to_csv('data/processed/features.csv', index=False)"
+```
+*Constructs cyclical time encodings, operational rush-hour categories, and strictly causal rolling historical congestion aggregates.*
+
+### Step 4: Train Models, Evaluate & Register with MLflow
+```powershell
+python -m src.models.train
+```
+*Executes a chronological 75/25 train-test split, trains the Historical-Median Baseline, Random Forest Regressor, and Gradient Boosting Regressor, logs runs to MLflow experiment `BusTravelTime-ModelSelection`, and registers the winning model as `BusTravelTimePredictor`.*
+
+### Step 5: Run Full Automated Test Suite
+```powershell
+pytest tests/ -v
+```
+*Executes all 25 unit tests across data cleaning, spatial gates, label extraction, feature leakage safeguards, and model pipelines.*
+
+### Step 6: Launch MLflow UI Dashboard
+```powershell
+mlflow ui
+```
+*Open [http://127.0.0.1:5000](http://127.0.0.1:5000) to inspect run parameters, metric curves, artifacts, and registered models.*
+
+---
+
+## 8. Benchmark Evaluation Results
+
+All models evaluated on the unseen chronological test set (38 traversals):
+
+| Model | Test MAE (min) | Test RMSE (min) | Test MAPE (%) | Test $R^2$ | Status |
+|---|---|---|---|---|---|
+| **Gradient Boosting Regressor** | **0.62 min** (37 sec) | **1.38 min** | **5.28%** | **0.850** | **Selected & Registered** |
+| **Random Forest Regressor** | **0.75 min** (45 sec) | **1.54 min** | **6.52%** | **0.812** | Benchmark Ensemble |
+| **Historical-Median Baseline** | **2.44 min** | **3.39 min** | **22.96%** | **0.089** | Heuristic Benchmark |
+
