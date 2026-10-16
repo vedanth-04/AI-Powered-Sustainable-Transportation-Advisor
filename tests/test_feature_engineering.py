@@ -118,3 +118,23 @@ def test_feature_columns_schema_complete():
     for col in CATEGORICAL_FEATURES + NUMERIC_FEATURES + [TARGET_COLUMN]:
         assert col in features.columns, f"Missing expected feature column: {col}"
         assert features[col].isnull().sum() == 0, f"Null values found in feature column: {col}"
+
+
+def test_target_derived_speed_is_excluded():
+    """Current-journey answers and stale aliases cannot change model inputs."""
+    df = pd.DataFrame({
+        "t_entry": [1000.0], "t_exit": [1600.0],
+        "travel_time_minutes": [10.0], "segment_id": ["SEG1"],
+        "segment_length_km": [3.0], "direction": ["EASTBOUND"],
+        "route_id": ["90"], "avg_speed_kmh": [18.0],
+        "approach_speed_kmh": [18.0],
+    })
+    before = engineer_features(df)
+    changed = df.assign(t_exit=2200.0, travel_time_minutes=20.0,
+                        avg_speed_kmh=9.0, approach_speed_kmh=9.0)
+    after = engineer_features(changed)
+    inputs = CATEGORICAL_FEATURES + NUMERIC_FEATURES
+    assert "approach_speed_kmh" not in inputs
+    assert "avg_speed_kmh" not in inputs
+    assert "approach_speed_kmh" not in before.columns
+    pd.testing.assert_frame_equal(before[inputs], after[inputs])

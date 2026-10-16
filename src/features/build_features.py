@@ -24,7 +24,6 @@ NUMERIC_FEATURES = [
     "minute_of_day",
     "sin_time",
     "cos_time",
-    "approach_speed_kmh",
     "hist_segment_median_tt",
     "hist_recent_60m_mean_tt",
     "hist_completed_count",
@@ -147,13 +146,9 @@ class TransitFeatureEngineer(BaseEstimator, TransformerMixin):
         df["cos_time"] = np.cos(radians)
         df["rush_hour_cat"] = df["entry_hour"].apply(compute_rush_hour_category)
 
-        # 2. Approach Kinematics
-        # If avg_speed_kmh is present, derive approach proxy or use historical bounds
-        if "avg_speed_kmh" in df.columns:
-            # Clip between 5 and 60 km/h
-            df["approach_speed_kmh"] = df["avg_speed_kmh"].clip(lower=5.0, upper=60.0)
-        else:
-            df["approach_speed_kmh"] = self.nominal_fallback_speed_kmh
+        # Completed-traversal avg_speed_kmh is derived from the target.
+        # Never expose it, or an old approach-speed alias, as a model input.
+        df = df.drop(columns=["approach_speed_kmh"], errors="ignore")
 
         # 3. Categorical normalizations
         df["route_id"] = df["route_id"].astype(str)

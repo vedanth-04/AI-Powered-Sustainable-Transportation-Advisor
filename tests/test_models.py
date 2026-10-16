@@ -74,3 +74,23 @@ def test_preprocessing_pipeline_transforms_features():
     assert transformed.shape[0] == 2
     assert transformed.shape[1] > 0
     assert not np.isnan(transformed).any()
+
+
+def test_permutation_importance_detects_predictive_signal(tmp_path):
+    """A fitted signal beats independent noise on unseen synthetic samples."""
+    from sklearn.tree import DecisionTreeRegressor
+    from src.models.importance import save_feature_importance
+
+    rng = np.random.default_rng(42)
+    train = pd.DataFrame({"signal": rng.normal(size=300), "noise": rng.normal(size=300)})
+    test = pd.DataFrame({"signal": rng.normal(size=150), "noise": rng.normal(size=150)})
+    model = DecisionTreeRegressor(max_depth=4, random_state=42)
+    model.fit(train, 10 * train["signal"])
+    csv_path, png_path = save_feature_importance(
+        model, test, 10 * test["signal"], tmp_path, "synthetic", n_repeats=5,
+    )
+    result = pd.read_csv(csv_path).set_index("feature")
+    assert result.loc["signal", "mae_increase_mean_minutes"] > 5
+    assert result.loc["signal", "mae_increase_mean_minutes"] > result.loc["noise", "mae_increase_mean_minutes"]
+    assert (result["evaluation_samples"] == 150).all()
+    assert png_path.stat().st_size > 0

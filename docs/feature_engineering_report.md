@@ -1,5 +1,12 @@
 # Feature Engineering & Leakage Prevention Specification Report
 
+> **Correction:** `approach_speed_kmh` has been removed from model inputs. The previous implementation copied completed-traversal `avg_speed_kmh`, which is calculated from the target, rather than measuring pre-entry speed. There are now 12 model inputs (4 categorical, 8 numeric). Old generated datasets may retain this column, but the training pipeline explicitly selects only the current input list. Rebuild features and retrain existing models. Earlier verification claims below do not validate the removed speed feature.
+
+### Feature importance
+
+Training now saves `<model>_feature_importance.csv` and `.png` in `outputs/` and logs them to MLflow for each model. These use 20 seeded permutations per original input column on the chronological test set, scoring the increase in MAE in minutes. A larger positive increase means greater model reliance. Zero/negative importance means no demonstrated improvement in this evaluation; correlated features can mask each other. Shuffle standard deviations are not confidence intervals. These diagnostics do not prove causality or justify selecting features using the same test set. Use separate chronological validation folds for feature selection. No new rankings or corrected model scores are claimed until real-data retraining is completed.
+
+
 **Project:** AI-Powered Sustainable Transportation Advisor  
 **Phase:** Phase 4 Deliverable — Feature Engineering & Leakage Safeguards  
 **Date:** October 2026  
@@ -47,7 +54,6 @@ $$t_{\text{exit}, j} \le t_{\text{entry}, i}$$
 | `sin_time` | Temporal | `float` | Unitless ($[-1, 1]$) | Cyclical time component: $\sin\left(\frac{2\pi \cdot \text{minute\_of\_day}}{1440}\right)$. Continuous across midnight. |
 | `cos_time` | Temporal | `float` | Unitless ($[-1, 1]$) | Cyclical time component: $\cos\left(\frac{2\pi \cdot \text{minute\_of\_day}}{1440}\right)$. Continuous across midnight. |
 | `rush_hour_cat` | Temporal | `str` (Cat) | Categorical | Operational traffic period: `MORNING_RUSH` (08:00–11:00), `MIDDAY` (11:00–17:00), `EVENING_RUSH` (17:00–21:00), `OFF_PEAK` (all other times). |
-| `approach_speed_kmh`| Kinematic | `float` | km/h | Speed of the vehicle during the approach window immediately prior to crossing entry gate. Clipped to $[5, 60]\text{ km/h}$. |
 | `hist_segment_median_tt`| Historical | `float` | Minutes | Rolling median travel time of all traversals on this segment completed prior to $t_{\text{entry}}$. Falls back to nominal duration if cold. |
 | `hist_recent_60m_mean_tt`| Historical | `float` | Minutes | Rolling mean travel time of traversals on this segment completed in the preceding 60 minutes ($t_{\text{entry}} - 3600 \le t_{\text{exit}} \le t_{\text{entry}}$). Captures dynamic traffic surges. |
 | `hist_completed_count` | Historical | `int` | Count | Number of prior traversals completed on this segment in memory. |

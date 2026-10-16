@@ -163,6 +163,8 @@ mlflow ui
 
 ## 8. Benchmark Evaluation Results
 
+> These historical scores predate the removal of a target-derived speed feature and must be reevaluated. Retrain with the corrected feature list before interpreting model accuracy. Training also generates per-model feature-importance CSVs and plots; see `docs/feature_engineering_report.md`.
+
 All models evaluated on the unseen chronological test set (38 traversals):
 
 | Model | Test MAE (min) | Test RMSE (min) | Test MAPE (%) | Test $R^2$ | Status |

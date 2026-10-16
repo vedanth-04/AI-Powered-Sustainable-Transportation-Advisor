@@ -32,6 +32,7 @@ from src.features.build_features import (
     TARGET_COLUMN,
     engineer_features,
 )
+from src.models.importance import save_feature_importance
 from src.models.baseline import HistoricalMedianRegressor
 from src.models.evaluate import (
     compute_regression_metrics,
@@ -176,6 +177,15 @@ def train_and_benchmark_models(
                 mlflow.log_metric(f"test_{k}", v)
             for k, v in train_metrics.items():
                 mlflow.log_metric(f"train_{k}", v)
+
+            # Diagnose reliance on original input columns, including categoricals.
+            # This is held-out interpretation, not feature selection or tuning.
+            importance_name = model_name.lower().replace(" ", "_").replace("-", "_")
+            importance_paths = save_feature_importance(
+                pipeline, X_test, y_test, output_dir, importance_name,
+            )
+            for artifact_path in importance_paths:
+                mlflow.log_artifact(str(artifact_path))
 
             # Save model binary
             sanitized_name = model_name.lower().replace(" ", "_").replace("-", "_")

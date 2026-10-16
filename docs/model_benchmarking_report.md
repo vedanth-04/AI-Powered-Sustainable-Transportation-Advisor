@@ -1,5 +1,7 @@
 # Model Training, Benchmarking, and Evaluation Report
 
+> **Superseded benchmark:** The scores and model-selection claims below were produced before removing the target-derived `approach_speed_kmh` feature. They are retained as historical records, not validated performance of the corrected pipeline. Regenerate features and rerun `python -m src.models.train` to obtain corrected metrics and per-model permutation-importance CSVs/plots. No corrected results are available in this checkout.
+
 **Project:** AI-Powered Sustainable Transportation Advisor  
 **Phase:** Phase 5 & 6 Deliverable — Model Training, Evaluation, and MLflow Integration  
 **Date:** October 2026  
@@ -118,4 +120,4 @@ Experiment tracking and model registration were conducted in compliance with the
 2. **Sample Size ($N = 152$)**:
    The 152 traversals represent only vehicles that cleanly completed continuous gate-to-gate crossings. As more daily databases are pulled from the 1.8 GB Zenodo archive via DVC, the training dataset can be scaled to thousands of traversals.
 3. **Hardware Speed Ceiling Artifact**:
-   As discovered in Phase 1, raw vehicle speed is capped at $21\text{ km/h}$ in the source feed. The ML models avoid using raw speed as a feature, relying instead on pre-entry approach speeds and physical segment lengths.
+   As discovered in Phase 1, raw vehicle speed is capped at $21\text{ km/h}$ in the source feed. The ML models avoid using raw speed as a feature, using the current explicit feature list; completed-traversal speeds are excluded.
