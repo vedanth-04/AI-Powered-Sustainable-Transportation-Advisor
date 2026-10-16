@@ -1,2 +1,0 @@
-# Placeholder to preserve data/raw/ directory structure in Git
-# Raw data files are ignored by .gitignore and should be tracked via DVC.
