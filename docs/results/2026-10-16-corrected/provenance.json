@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-16",
+  "code_commit": "84ac497",
+  "python": "3.9.13 (tags/v3.9.13:6de2ca5, May 17 2022, 16:36:42) [MSC v.1929 64 bit (AMD64)]",
+  "scikit_learn": "1.4.2",
+  "numpy": "2.0.2",
+  "mlflow": "3.1.4",
+  "database_sha256": "7f3511ec1a16922e48715964f66cfe66e944a197b7eca501cdedbe93ea81f9ae",
+  "feature_csv_sha256": "2b8809c6afed24872a66518e2eed1351aafd23037bca6fef80fcfa12d3807741",
+  "train_samples": 114,
+  "test_samples": 38,
+  "random_seed": 42,
+  "permutation_repeats": 20,
+  "history_protocol": "Online history: earlier test journeys may contribute only after completion before the current entry.",
+  "removed_input": "approach_speed_kmh"
+}

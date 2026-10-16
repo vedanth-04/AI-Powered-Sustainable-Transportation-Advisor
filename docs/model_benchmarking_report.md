@@ -1,6 +1,6 @@
 # Model Training, Benchmarking, and Evaluation Report
 
-> **Superseded benchmark:** The scores and model-selection claims below were produced before removing the target-derived `approach_speed_kmh` feature. They are retained as historical records, not validated performance of the corrected pipeline. Regenerate features and rerun `python -m src.models.train` to obtain corrected metrics and per-model permutation-importance CSVs/plots. No corrected results are available in this checkout.
+> **Superseded benchmark:** The scores and model-selection claims below were produced before removing the target-derived `approach_speed_kmh` feature. They are retained as historical records, not validated performance of the corrected pipeline. Regenerate features and rerun `python -m src.models.train` to obtain corrected metrics and per-model permutation-importance CSVs/plots. Corrected results are now available in [the measured-results report](results/2026-10-16-corrected/README.md): Random Forest MAE 1.8694 minutes, Gradient Boosting 1.9427 minutes, baseline 2.4412 minutes.
 
 **Project:** AI-Powered Sustainable Transportation Advisor  
 **Phase:** Phase 5 & 6 Deliverable — Model Training, Evaluation, and MLflow Integration  

@@ -4,7 +4,7 @@
 
 ### Feature importance
 
-Training now saves `<model>_feature_importance.csv` and `.png` in `outputs/` and logs them to MLflow for each model. These use 20 seeded permutations per original input column on the chronological test set, scoring the increase in MAE in minutes. A larger positive increase means greater model reliance. Zero/negative importance means no demonstrated improvement in this evaluation; correlated features can mask each other. Shuffle standard deviations are not confidence intervals. These diagnostics do not prove causality or justify selecting features using the same test set. Use separate chronological validation folds for feature selection. No new rankings or corrected model scores are claimed until real-data retraining is completed.
+Training now saves `<model>_feature_importance.csv` and `.png` in `outputs/` and logs them to MLflow for each model. These use 20 seeded permutations per original input column on the chronological test set, scoring the increase in MAE in minutes. A larger positive increase means greater model reliance. Zero/negative importance means no demonstrated improvement in this evaluation; correlated features can mask each other. Shuffle standard deviations are not confidence intervals. These diagnostics do not prove causality or justify selecting features using the same test set. Use separate chronological validation folds for feature selection. Corrected real-data retraining is now complete; see [measured results](results/2026-10-16-corrected/README.md) for rankings, corrected metrics, and limitations.
 
 
 **Project:** AI-Powered Sustainable Transportation Advisor  

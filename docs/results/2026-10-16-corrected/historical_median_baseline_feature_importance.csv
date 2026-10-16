@@ -1,0 +1,13 @@
+feature,mae_increase_mean_minutes,mae_increase_std_minutes,n_repeats,evaluation_samples
+segment_id,0.9671761450328328,0.23827387169821554,20,38
+direction,0.0,0.0,20,38
+route_id,0.0,0.0,20,38
+rush_hour_cat,0.0,0.0,20,38
+segment_length_km,0.0,0.0,20,38
+entry_hour,0.0,0.0,20,38
+minute_of_day,0.0,0.0,20,38
+sin_time,0.0,0.0,20,38
+cos_time,0.0,0.0,20,38
+hist_segment_median_tt,0.0,0.0,20,38
+hist_recent_60m_mean_tt,0.0,0.0,20,38
+hist_completed_count,0.0,0.0,20,38

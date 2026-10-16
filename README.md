@@ -163,6 +163,8 @@ mlflow ui
 
 ## 8. Benchmark Evaluation Results
 
+Corrected retraining is complete: Random Forest MAE **1.87 minutes**, Gradient Boosting **1.94 minutes**, baseline **2.44 minutes**. See [measured feature importance and corrected results](docs/results/2026-10-16-corrected/README.md). The historical table below is superseded.
+
 > These historical scores predate the removal of a target-derived speed feature and must be reevaluated. Retrain with the corrected feature list before interpreting model accuracy. Training also generates per-model feature-importance CSVs and plots; see `docs/feature_engineering_report.md`.
 
 All models evaluated on the unseen chronological test set (38 traversals):
