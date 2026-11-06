@@ -1,12 +1,21 @@
 """Unit tests for model baselines, training pipelines, and evaluation metrics."""
 
+from datetime import date, datetime
+
 import numpy as np
 import pandas as pd
 import pytest
 
+from src.features.build_features import CATEGORICAL_FEATURES, NUMERIC_FEATURES, engineer_features
+from src.features.segment_config import SEGMENT_ORR_EASTBOUND
 from src.models.baseline import HistoricalMedianRegressor
 from src.models.evaluate import compute_regression_metrics
-from src.models.train import build_preprocessing_pipeline, create_chronological_split
+from src.models.train import (
+    build_preprocessing_pipeline,
+    create_chronological_split,
+    load_training_features,
+)
+from src.models.train_cold_start import split_by_date
 
 
 def test_baseline_regressor_fit_and_fallback():
@@ -42,6 +51,29 @@ def test_chronological_split_ordering():
     assert df_test["t_entry"].min() >= df_train["t_entry"].max()
 
 
+def test_cold_start_split_excludes_labels_finishing_at_cutoffs():
+    validation_start = date(2019, 7, 5)
+    test_start = date(2019, 7, 8)
+    validation_cutoff = datetime.fromisoformat("2019-07-05T00:00:00+05:30").timestamp()
+    test_cutoff = datetime.fromisoformat("2019-07-08T00:00:00+05:30").timestamp()
+    exits = np.array([
+        validation_cutoff - 120, validation_cutoff - 60, validation_cutoff,
+        validation_cutoff + 120, validation_cutoff + 180, test_cutoff + 30,
+        test_cutoff + 60, test_cutoff + 120,
+    ])
+    traversals = pd.DataFrame({
+        "t_entry": exits - 60,
+        "t_exit": exits,
+        "travel_time_minutes": 1.0,
+    })
+
+    training, validation, test = split_by_date(traversals, validation_start, test_start)
+
+    assert training.index.tolist() == [0, 1]
+    assert validation.index.tolist() == [3, 4]
+    assert test.index.tolist() == [6, 7]
+
+
 def test_compute_regression_metrics_perfect_prediction():
     """Perfect predictions must yield exactly 0.0 MAE and RMSE, and 1.0 R²."""
     y_true = np.array([5.0, 6.0, 7.0, 8.0])
@@ -74,6 +106,46 @@ def test_preprocessing_pipeline_transforms_features():
     assert transformed.shape[0] == 2
     assert transformed.shape[1] > 0
     assert not np.isnan(transformed).any()
+
+
+def test_route_90_cold_start_training_serving_parity(tmp_path):
+    segment = SEGMENT_ORR_EASTBOUND
+    entry_at = datetime.fromisoformat("2019-07-01T17:10:00+05:30")
+    request = {
+        "segment_id": segment.segment_id,
+        "direction": segment.direction,
+        "segment_length_km": segment.length_km,
+        "route_id": "90",
+        "t_entry": entry_at.timestamp(),
+    }
+    traversals = pd.DataFrame([
+        {**request, "t_entry": request["t_entry"] - 600, "t_exit": request["t_entry"] - 120,
+         "entry_hour": 17, "entry_minute": 0, "travel_time_minutes": 8.0},
+        {**request, "t_exit": request["t_entry"] + 300, "entry_hour": 17,
+         "entry_minute": 10, "travel_time_minutes": 5.0},
+    ])
+    assert engineer_features(traversals).loc[1, "hist_completed_count"] == 1
+
+    feature_path = tmp_path / "features.csv"
+    engineer_features(traversals, use_observed_history=False).to_csv(feature_path, index=False)
+    feature_columns = CATEGORICAL_FEATURES + NUMERIC_FEATURES
+    training = load_training_features(feature_path)[feature_columns]
+    serving = engineer_features(pd.DataFrame([request]), use_observed_history=False)[feature_columns]
+
+    assert len(feature_columns) == 12
+    assert training.loc[1, "route_id"] == serving.loc[0, "route_id"] == "90"
+    assert serving.loc[0, "minute_of_day"] == 17 * 60 + 10
+    assert serving.loc[0, "hist_completed_count"] == 0
+    fallback_minutes = segment.length_km / 22 * 60
+    assert serving.loc[0, "hist_segment_median_tt"] == pytest.approx(fallback_minutes)
+    assert serving.loc[0, "hist_recent_60m_mean_tt"] == pytest.approx(fallback_minutes)
+    training_trip = training.iloc[[1]].reset_index(drop=True)
+    pd.testing.assert_frame_equal(training_trip, serving, check_dtype=True)
+
+    preprocessor = build_preprocessing_pipeline().fit(training)
+    np.testing.assert_allclose(
+        preprocessor.transform(training_trip), preprocessor.transform(serving), atol=1e-12
+    )
 
 
 def test_permutation_importance_detects_predictive_signal(tmp_path):

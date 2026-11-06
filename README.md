@@ -175,3 +175,24 @@ All models evaluated on the unseen chronological test set (38 traversals):
 | **Random Forest Regressor** | **0.75 min** (45 sec) | **1.54 min** | **6.52%** | **0.812** | Benchmark Ensemble |
 | **Historical-Median Baseline** | **2.44 min** | **3.39 min** | **22.96%** | **0.089** | Heuristic Benchmark |
 
+## 9. Phase 2 Local Inference Demo
+
+Run this from the repository root in the Python 3.12 release environment. The exporter uses the passing quality report and numbered local registry version recorded in `outputs/phase2_release_check`. It verifies the approved joblib artifact and writes the local serving bundle under `outputs/phase2_serving`.
+
+```powershell
+.\.venv\Scripts\python.exe -m src.models.export_serving_bundle
+.\.venv\Scripts\python.exe -m uvicorn src.api.main:app --host 127.0.0.1 --port 8000
+```
+
+Open [Swagger UI](http://127.0.0.1:8000/docs) and try `POST /predict/bus`.
+
+```json
+{
+  "segment_id": "ORR_CHIRAG_TO_NEHRU_PLACE_EB",
+  "route_id": "90",
+  "entry_at": "2019-07-08T17:10:00+05:30"
+}
+```
+
+The prediction returns segment riding time in minutes, the model version, and the cold-start policy. `GET /health` reports readiness. Invalid requests and routes outside the approved historical demo receive HTTP 422. An unavailable or invalid bundle returns HTTP 503.
+

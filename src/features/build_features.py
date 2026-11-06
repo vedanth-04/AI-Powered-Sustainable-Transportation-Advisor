@@ -120,9 +120,15 @@ def compute_causal_historical_statistics(
 class TransitFeatureEngineer(BaseEstimator, TransformerMixin):
     """Scikit-learn compatible transformer that constructs leakage-free transit features."""
 
-    def __init__(self, window_sec: float = 3600.0, nominal_fallback_speed_kmh: float = 22.0):
+    def __init__(
+        self,
+        window_sec: float = 3600.0,
+        nominal_fallback_speed_kmh: float = 22.0,
+        use_observed_history: bool = True,
+    ):
         self.window_sec = window_sec
         self.nominal_fallback_speed_kmh = nominal_fallback_speed_kmh
+        self.use_observed_history = use_observed_history
 
     def fit(self, X: pd.DataFrame, y=None):
         """Fit transformer (records schema and validates input columns)."""
@@ -133,10 +139,11 @@ class TransitFeatureEngineer(BaseEstimator, TransformerMixin):
         df = X.copy()
 
         # 1. Temporal & Cyclical Features
-        if "entry_hour" not in df.columns:
+        if "entry_hour" not in df.columns or not self.use_observed_history:
             # Derive from t_entry (epoch to IST)
             ist_times = pd.to_datetime(df["t_entry"] + 19800, unit="s", utc=True)
-            df["entry_hour"] = ist_times.dt.hour
+            # A float column keeps the same dtype after the feature CSV is read.
+            df["entry_hour"] = ist_times.dt.hour.astype("float64")
             df["entry_minute"] = ist_times.dt.minute
 
         df["minute_of_day"] = df["entry_hour"] * 60.0 + df["entry_minute"].astype(float)
@@ -156,14 +163,14 @@ class TransitFeatureEngineer(BaseEstimator, TransformerMixin):
         df["segment_id"] = df["segment_id"].astype(str)
 
         # 4. Causal historical statistics (leakage-safe)
-        if TARGET_COLUMN in df.columns and "t_exit" in df.columns:
+        if self.use_observed_history and TARGET_COLUMN in df.columns and "t_exit" in df.columns:
             df = compute_causal_historical_statistics(
                 df,
                 window_sec=self.window_sec,
                 nominal_fallback_speed_kmh=self.nominal_fallback_speed_kmh,
             )
         else:
-            # Inference mode without targets
+            # Cold-start mode for serving without an observed history store.
             df["hist_segment_median_tt"] = (df["segment_length_km"] / self.nominal_fallback_speed_kmh) * 60.0
             df["hist_recent_60m_mean_tt"] = df["hist_segment_median_tt"]
             df["hist_completed_count"] = 0
@@ -171,7 +178,9 @@ class TransitFeatureEngineer(BaseEstimator, TransformerMixin):
         return df
 
 
-def engineer_features(traversals_df: pd.DataFrame) -> pd.DataFrame:
-    """Convenience functional wrapper around TransitFeatureEngineer."""
-    engineer = TransitFeatureEngineer()
+def engineer_features(
+    traversals_df: pd.DataFrame, *, use_observed_history: bool = True
+) -> pd.DataFrame:
+    """Build features, optionally using the same cold-start policy as serving."""
+    engineer = TransitFeatureEngineer(use_observed_history=use_observed_history)
     return engineer.transform(traversals_df)
