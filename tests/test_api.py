@@ -1,0 +1,127 @@
+"""Exercise the Route 90 prediction API against a local model bundle."""
+
+from datetime import datetime
+from hashlib import sha256
+import json
+
+from fastapi.testclient import TestClient
+import joblib
+import pandas as pd
+import pytest
+import sklearn
+from sklearn.pipeline import Pipeline
+from sklearn.tree import DecisionTreeRegressor
+
+from src.api.main import create_app
+from src.features.build_features import CATEGORICAL_FEATURES, NUMERIC_FEATURES, engineer_features
+from src.features.segment_config import SEGMENT_ORR_EASTBOUND
+from src.models.train import build_preprocessing_pipeline
+
+
+FEATURE_COLUMNS = CATEGORICAL_FEATURES + NUMERIC_FEATURES
+REQUEST = {
+    "segment_id": SEGMENT_ORR_EASTBOUND.segment_id,
+    "route_id": "90",
+    "entry_at": "2019-07-08T08:10:00+05:30",
+}
+
+
+def cold_start_features(*entry_times):
+    inputs = pd.DataFrame([
+        {
+            "segment_id": SEGMENT_ORR_EASTBOUND.segment_id,
+            "direction": SEGMENT_ORR_EASTBOUND.direction,
+            "route_id": REQUEST["route_id"],
+            "segment_length_km": SEGMENT_ORR_EASTBOUND.length_km,
+            "t_entry": datetime.fromisoformat(entry_at).timestamp(),
+        }
+        for entry_at in entry_times
+    ])
+    return engineer_features(inputs, use_observed_history=False)[FEATURE_COLUMNS]
+
+
+@pytest.fixture
+def model_bundle(tmp_path):
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    model = Pipeline([
+        ("preprocessor", build_preprocessing_pipeline()),
+        ("regressor", DecisionTreeRegressor(random_state=42)),
+    ])
+    model.fit(
+        cold_start_features(REQUEST["entry_at"], "2019-07-08T17:10:00+05:30"),
+        [5.0, 13.0],
+    )
+    model_path = bundle_dir / "model.joblib"
+    joblib.dump(model, model_path)
+    manifest = {
+        "model_name": "BusTravelTimePredictor",
+        "model_version": 1,
+        "history_policy": "cold_start_v1",
+        "features": FEATURE_COLUMNS,
+        "model_sha256": sha256(model_path.read_bytes()).hexdigest(),
+        "scikit_learn_version": sklearn.__version__,
+        "segment_id": REQUEST["segment_id"],
+        "route_id": REQUEST["route_id"],
+    }
+    (bundle_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    return bundle_dir, model
+
+
+def test_health_and_bus_prediction_match_offline_model(model_bundle):
+    bundle_dir, model = model_bundle
+    # The UTC representation of the evening training time must use its IST features.
+    entry_times = [REQUEST["entry_at"], "2019-07-08T11:40:00+00:00"]
+    expected_durations = model.predict(cold_start_features(*entry_times))
+    assert expected_durations.tolist() == [5.0, 13.0]
+
+    with TestClient(create_app(bundle_dir)) as client:
+        health = client.get("/health")
+        assert health.status_code == 200
+        health_body = health.json()
+        assert health_body["status"] == "ready"
+        assert health_body["model_name"] == "BusTravelTimePredictor"
+        assert health_body["model_version"] == 1
+        assert health_body["history_policy"] == "cold_start_v1"
+
+        for entry_at, expected in zip(entry_times, expected_durations):
+            response = client.post("/predict/bus", json={**REQUEST, "entry_at": entry_at})
+            assert response.status_code == 200
+            body = response.json()
+            assert body["duration_minutes"] == pytest.approx(expected)
+            assert body["model_version"] == 1
+            assert body["estimate_source"] == "model"
+            assert body["history_policy"] == "cold_start_v1"
+
+
+def test_hash_mismatch_makes_api_unready(model_bundle):
+    bundle_dir, _ = model_bundle
+    model_path = bundle_dir / "model.joblib"
+    with model_path.open("ab") as stream:
+        stream.write(b"artifact changed after publishing")
+
+    with TestClient(create_app(bundle_dir)) as client:
+        assert client.get("/health").status_code == 503
+        assert client.post("/predict/bus", json=REQUEST).status_code == 503
+
+
+@pytest.mark.parametrize(
+    "override",
+    [
+        pytest.param({"route_id": "83"}, id="unsupported-route"),
+        pytest.param({"segment_id": "ORR_NEHRU_PLACE_TO_CHIRAG_WB"}, id="unsupported-segment"),
+        pytest.param({"route_id": 90}, id="numeric-route"),
+        pytest.param({"segment_id": 90}, id="numeric-segment"),
+        pytest.param({"entry_at": "2019-07-08T08:10:00"}, id="naive-time"),
+        pytest.param({"entry_at": 1562553600}, id="numeric-time"),
+        pytest.param({"entry_at": "1562553600"}, id="numeric-string-time"),
+        pytest.param({"travel_time_minutes": 10.0}, id="extra-target"),
+    ],
+)
+def test_rejects_invalid_or_unsupported_requests(model_bundle, override):
+    bundle_dir, _ = model_bundle
+
+    with TestClient(create_app(bundle_dir)) as client:
+        response = client.post("/predict/bus", json={**REQUEST, **override})
+
+    assert response.status_code == 422

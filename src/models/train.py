@@ -30,7 +30,6 @@ from src.features.build_features import (
     CATEGORICAL_FEATURES,
     NUMERIC_FEATURES,
     TARGET_COLUMN,
-    engineer_features,
 )
 from src.models.importance import save_feature_importance
 from src.models.baseline import HistoricalMedianRegressor
@@ -42,6 +41,7 @@ from src.models.evaluate import (
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
+BASELINE_NAME = "Historical-Median Baseline"
 
 
 def create_chronological_split(
@@ -86,40 +86,15 @@ def build_preprocessing_pipeline() -> ColumnTransformer:
     return preprocessor
 
 
-def train_and_benchmark_models(
-    features_csv_path: Path = PROCESSED_DATA_DIR / "features.csv",
-    output_dir: Path = OUTPUTS_DIR,
-) -> Dict[str, Any]:
-    """Train baseline, Random Forest, and Gradient Boosting models, evaluate, and log to MLflow."""
-    output_dir.mkdir(parents=True, exist_ok=True)
-    models_dir = output_dir / "models"
-    models_dir.mkdir(parents=True, exist_ok=True)
+def load_training_features(features_csv_path: Path) -> pd.DataFrame:
+    """Preserve route IDs as categorical strings when loading features."""
+    return pd.read_csv(features_csv_path, dtype={"route_id": str})
 
-    if not features_csv_path.exists():
-        raise FileNotFoundError(f"Features file not found at {features_csv_path}")
 
-    df_all = pd.read_csv(features_csv_path)
-    logger.info(f"Loaded {len(df_all)} traversal feature records.")
-
-    # Chronological Split (75% past train, 25% future test)
-    df_train, df_test = create_chronological_split(df_all, train_ratio=0.75)
-    logger.info(f"Chronological split: Train = {len(df_train)} samples, Test = {len(df_test)} samples")
-
-    X_train = df_train[CATEGORICAL_FEATURES + NUMERIC_FEATURES]
-    y_train = df_train[TARGET_COLUMN].to_numpy()
-
-    X_test = df_test[CATEGORICAL_FEATURES + NUMERIC_FEATURES]
-    y_test = df_test[TARGET_COLUMN].to_numpy()
-
-    # Configure MLflow Experiment
-    try:
-        mlflow.set_experiment(MLFLOW_EXPERIMENT_NAME)
-    except Exception as e:
-        logger.warning(f"Could not set MLflow experiment: {e}")
-
-    # Model Definitions
-    models: Dict[str, Pipeline | Any] = {
-        "Historical-Median Baseline": HistoricalMedianRegressor(segment_col="segment_id"),
+def build_candidate_models() -> Dict[str, Any]:
+    """Create fresh estimators with the project's benchmark settings."""
+    return {
+        BASELINE_NAME: HistoricalMedianRegressor(segment_col="segment_id"),
         "Random Forest Regressor": Pipeline([
             ("preprocessor", build_preprocessing_pipeline()),
             ("regressor", RandomForestRegressor(
@@ -142,6 +117,40 @@ def train_and_benchmark_models(
             )),
         ]),
     }
+
+
+def train_and_benchmark_models(
+    features_csv_path: Path = PROCESSED_DATA_DIR / "features.csv",
+    output_dir: Path = OUTPUTS_DIR,
+) -> Dict[str, Any]:
+    """Train baseline, Random Forest, and Gradient Boosting models, evaluate, and log to MLflow."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    models_dir = output_dir / "models"
+    models_dir.mkdir(parents=True, exist_ok=True)
+
+    if not features_csv_path.exists():
+        raise FileNotFoundError(f"Features file not found at {features_csv_path}")
+
+    df_all = load_training_features(features_csv_path)
+    logger.info(f"Loaded {len(df_all)} traversal feature records.")
+
+    # Chronological Split (75% past train, 25% future test)
+    df_train, df_test = create_chronological_split(df_all, train_ratio=0.75)
+    logger.info(f"Chronological split: Train = {len(df_train)} samples, Test = {len(df_test)} samples")
+
+    X_train = df_train[CATEGORICAL_FEATURES + NUMERIC_FEATURES]
+    y_train = df_train[TARGET_COLUMN].to_numpy()
+
+    X_test = df_test[CATEGORICAL_FEATURES + NUMERIC_FEATURES]
+    y_test = df_test[TARGET_COLUMN].to_numpy()
+
+    # Configure MLflow Experiment
+    try:
+        mlflow.set_experiment(MLFLOW_EXPERIMENT_NAME)
+    except Exception as e:
+        logger.warning(f"Could not set MLflow experiment: {e}")
+
+    models = build_candidate_models()
 
     results: Dict[str, Dict[str, Any]] = {}
     summary_rows = []
