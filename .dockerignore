@@ -1,0 +1,13 @@
+# Include only the files used to build the inference image.
+**
+!requirements-serve.lock.txt
+!src/__init__.py
+!src/config.py
+!src/api/__init__.py
+!src/api/bundle.py
+!src/api/main.py
+!src/features/__init__.py
+!src/features/build_features.py
+!src/features/segment_config.py
+!outputs/phase2_serving/manifest.json
+!outputs/phase2_serving/model.joblib
