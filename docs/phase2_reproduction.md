@@ -1,0 +1,100 @@
+# Reproduce the Phase 2 model approval workflow
+
+The deployed image demonstrates the approved historical Route 90 model. The commands here repeat model testing, training, quality checks, registry registration, export, and an in-process FastAPI check in a new local workspace. Each execution uses a separate SQLite registry. Publishing another image or changing the live deployment remains a separate release action.
+
+## Prerequisites
+
+Use Python 3.12 with the project's release/test dependencies installed. The existing development machine has this environment at `.venv`. For a fresh clone, create a Python 3.12 environment and install `requirements-ci.txt`; it includes the inference dependencies and the additional training/test tools. Run commands from the repository root. Docker is used for the already published API deployment; this model reproduction command runs in Python.
+
+Supply the processed traversal CSV locally. The demonstrated input is `data/processed/phase2_cold_start/traversals.csv`, with 637 traversals and SHA-256 `243f568e1abc9d29e2fe9f665df36302a2aff61851438871de7ea4643dd5267b`. The data file is ignored by Git. A fresh clone needs the corresponding processed data from the project's data workflow before it can reproduce training. The committed historical reports are evidence of the earlier evaluation, and do not replace the input dataset.
+
+## Run all stages
+
+Choose a new output directory for every attempt:
+
+```powershell
+.\.venv\Scripts\python.exe -m scripts.reproduce_model_workflow `
+  --traversals data/processed/phase2_cold_start/traversals.csv `
+  --validation-start 2019-07-05 `
+  --test-start 2019-07-08 `
+  --output-dir outputs/phase2_reproduction_demo
+```
+
+If the output directory already exists, the command stops before running tests or model operations. Omit `--output-dir` to use a new timestamped directory automatically. A failure leaves the new run's partial results and `workflow_report.json` available for inspection; retry with a different directory.
+
+On Windows, test fixtures use a short operating-system temporary directory so MLflow's nested artifact paths fit. Its location is recorded as `pytest_temp_dir` in the workflow report. JUnit XML and model workflow evidence remain under the chosen output directory.
+
+| Stage | Tools | What happens |
+|---|---|---|
+| Tests | Python, Pytest | Run the repository test suite and write JUnit XML. Failure stops the workflow before training. |
+| Training | pandas, scikit-learn, Joblib, MLflow | Rebuild cold-start features, use date-separated splits, fit median/Random Forest/Gradient Boosting candidates, select the tree on validation MAE, and log the runs and artifacts. |
+| Quality approval | Python, pandas, scikit-learn, MLflow | Recompute scores from the saved artifacts; verify input, split, feature, test-result, runtime and MLflow provenance; require improvement over the median and valid predictions. |
+| Registry | MLflow Model Registry | Register the passing candidate in the new local SQLite store, reload that numbered version, compare predictions, and attach approval/checksum tags after verification. |
+| Export | Joblib, SHA-256, MLflow client | Use the existing exporter to produce a model and manifest linked to the checked registry version. |
+| API check | FastAPI, Pydantic, TestClient | Load that new bundle in process; verify readiness, a Route 90 prediction, and HTTP 422 for an unsupported route. |
+
+The test dataset is used to assess the selected candidate and decide whether it meets the historical demonstration gate. Model selection uses the validation split. Repeating this workflow on the same July 2019 observations is a reproducibility exercise; it does not add a new independent accuracy evaluation or establish present-day transport performance.
+
+## Inspect the results
+
+```text
+outputs/phase2_reproduction_demo/
+  workflow_report.json       Overall result, completed stages, and API response
+  pytest.xml                 Actual test outcome for this execution
+  registry/
+    tracking.db              This run's independent MLflow store
+    artifacts/               Locally logged run/model artifacts
+  training/
+    run_report.json          Input hash, splits, metrics and MLflow run IDs
+    model_comparison.csv     Validation comparisons and selected test results
+    test_by_segment.csv      Historical segment error breakdown
+    quality_report.json      Passing or failing checks and supporting evidence
+    registration.json        Created only after successful registration verification
+    historical_median.joblib
+    tree_candidate.joblib
+  serving/
+    manifest.json
+    model.joblib
+```
+
+All files above are generated locally under the ignored `outputs` directory. The report contains a local registry URI, so moving the entire run to another machine also requires handling MLflow's artifact paths. Teammates can reproduce their own local run from the same input data and environment.
+
+A model version number belongs to its registry. Version 1 in this new store is an independent reproduction record. It does not replace the original registry's version 1, change `deploy/model-v1.json`, or publish an image. Check the run ID, artifact checksum, registry URI, and scope together when identifying a model.
+
+## Run quality and registration separately
+
+For an existing training run created by `src.models.train_cold_start`, supply the actual successful test report:
+
+```powershell
+.\.venv\Scripts\python.exe -m src.models.check_quality `
+  --run-dir outputs/phase2_reproduction_demo/training `
+  --pytest-xml outputs/phase2_reproduction_demo/pytest.xml
+
+.\.venv\Scripts\python.exe -m src.models.register_checked_model `
+  --run-dir outputs/phase2_reproduction_demo/training
+```
+
+These standalone commands are for a run that has not already completed those stages. The quality checker saves a report even when a check fails and exits with an error. The registrar requires a passing report and matching input/report/artifact identities before it writes to the registry. Both refuse to overwrite their existing report files. To rerun the complete process, choose a new output directory rather than modifying an earlier approval record.
+
+To export a separately registered result:
+
+```powershell
+.\.venv\Scripts\python.exe -m src.models.export_serving_bundle `
+  --release-dir outputs/phase2_reproduction_demo/training `
+  --bundle-dir outputs/phase2_reproduction_demo/serving
+```
+
+For the existing classroom deployment, continue to use `scripts.deploy_api` and `scripts.verify_deployment` with the approved published image. Keep the historical demonstration scope and the recorded evidence timestamps visible when presenting the results.
+
+## Recorded validation on 7 November 2026
+
+The complete command passed on the existing 637-traversal input in `outputs/phase2_reproduction_20261107_complete`. Its recorded result contains:
+
+- 80 passing tests, with no failures, errors, or skipped tests.
+- All 16 required model-quality checks passing.
+- Gradient Boosting selected by validation MAE of 2.473947 minutes; overall test MAE of 3.622576 minutes.
+- An independent local registry version verified against all 127 held-out predictions.
+- A successfully exported bundle whose model SHA-256 matches the historical v1 artifact: `b26d1a45f8e97278b8be70eef9c6c88e39b7d52537d55bea6a206b3391934a88`.
+- An in-process prediction of 6.320402254818158 minutes, readiness success, and HTTP 422 for an unsupported route.
+
+The original registry database, serving bundle, deployment state, and published-release metadata were hash-checked before and after this reproduction and remained unchanged. The earlier 58-test PDF captures the preceding demonstration stage; this section records the subsequently expanded workflow tests.

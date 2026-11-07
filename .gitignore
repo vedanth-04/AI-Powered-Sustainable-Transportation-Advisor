@@ -120,3 +120,6 @@ Thumbs.db
 [Dd]esktop.ini
 .DS_Store
 $RECYCLE.BIN/
+
+# Local PDF rendering previews
+tmp/pdfs/

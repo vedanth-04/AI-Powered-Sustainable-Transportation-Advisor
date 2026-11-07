@@ -2,6 +2,21 @@
 
 An applied MLOps project for predicting urban bus-segment travel times using real-world Delhi bus GPS observations, designed to enable accurate, reliable, and sustainable public transit journey planning.
 
+## Phase 2 local demo quick start
+
+After the Phase 2 additions in [PR #3](https://github.com/vedanth-04/AI-Powered-Sustainable-Transportation-Advisor/pull/3) are merged, teammates can use the default `main` branch. Install Git, Python 3.12, and Docker Desktop with its WSL 2 Linux engine running, then run these commands in PowerShell:
+
+```powershell
+git clone https://github.com/vedanth-04/AI-Powered-Sustainable-Transportation-Advisor.git
+cd AI-Powered-Sustainable-Transportation-Advisor
+py -3.12 -m scripts.deploy_api --port 8001
+py -3.12 -m scripts.verify_deployment
+```
+
+Open [the local API documentation](http://127.0.0.1:8001/docs) and use the Route 90 request in section 9. If GHCR requires authentication, follow the [teammate setup instructions](docs/phase2_demo.md#8-teammate-setup-from-a-fresh-clone). The published image contains the approved model and inference dependencies. Training reproduction additionally requires the processed input data and the Python training environment described in the [reproduction guide](docs/phase2_reproduction.md).
+
+The Phase 2 demonstration includes model tests and quality checks, MLflow registration, FastAPI, Docker, automated CI and image delivery, and a locally initiated Windows deployment. The [submission checklist](docs/phase2_submission_checklist.md) maps the requirements to the evidence and presentation order.
+
 ---
 
 ## 1. Problem Statement
@@ -229,4 +244,45 @@ git push origin refs/tags/phase2-image-v1
 The upload stores only the approved model and manifest in the versioned Actions secrets `PHASE2_MODEL_V1_PART_1` and `PHASE2_MODEL_V1_PART_2`. The tagged workflow checks both file hashes before building and checks the approved Route 90 prediction before pushing `ghcr.io/vedanth-04/ai-powered-sustainable-transportation-advisor/bus-travel-time:v1`.
 
 A fresh runner pulls the published image by digest and repeats the HTTP smoke test. Use the digest from the successful **Phase 2 Model v1 Release** run summary as the deployment reference.
+
+## 13. Phase 2 Deployment on Windows with WSL 2
+
+Start Docker Desktop's Linux engine and run the deployment from PowerShell in the repository root. Authenticate Docker to GHCR first if the package requires pull access.
+
+```powershell
+docker login ghcr.io
+.\.venv\Scripts\python.exe -m scripts.deploy_api --port 8001
+```
+
+The deployment uses the image digest in `deploy/model-v1.json`. It pulls the image, starts a dedicated Docker Compose service, waits for readiness, and checks the model version, Route 90 prediction, and rejection of an unsupported route. The active and prior release records are stored in `outputs/phase2_deploy/state.json`. A failed update restores the prior release and reports the failure.
+
+Open [Swagger UI on port 8001](http://127.0.0.1:8001/docs) and try the request from section 9. For the demo, show the successful GitHub release run and the same image responding on the Windows host. GitHub Actions automates CI and image publication. The command above starts the workstation deployment, with the port published to localhost.
+
+## 14. Phase 2 Verification and Team Demonstration
+
+After deployment, save a read-only check of the actual container digest, readiness, prediction, and request validation:
+
+```powershell
+.\.venv\Scripts\python.exe -m scripts.verify_deployment
+```
+
+The command uses the recorded deployment port and writes `outputs/phase2_demo/deployment_check.json`. It exits with an error if the deployment differs from the approved release or an API check fails. Runtime evidence is separate from model accuracy evaluation.
+
+See the [Phase 2 demo and teammate setup guide](docs/phase2_demo.md) for the current Gradient Boosting v1 results, quality and registry evidence, Windows setup, and the classroom demonstration sequence. The earlier benchmark results in section 8 describe a different experiment from the deployed `cold_start_v1` model.
+
+The [captured Phase 2 evidence PDF](output/pdf/Phase_2_Demonstration_Evidence.pdf) includes the recorded test and runtime results with actual screenshots of the registry, API, Docker service, and successful CI/release runs.
+
+## 15. Reproduce Model Quality Approval and Registration
+
+Use the Python 3.12 release/test environment and the processed historical traversal CSV to repeat the model workflow in a new directory and local SQLite registry:
+
+```powershell
+.\.venv\Scripts\python.exe -m scripts.reproduce_model_workflow --traversals data/processed/phase2_cold_start/traversals.csv
+```
+
+The command runs Pytest, trains the comparison, verifies model quality and artifact provenance, registers the checked model, exports its bundle, and checks that bundle through FastAPI in process. Failures stop subsequent stages. A new timestamped output directory preserves each attempt. See the [reproduction guide](docs/phase2_reproduction.md) for the input data requirement, individual commands, result files, and the distinction between an independent local registry version and the published v1 release.
+
+## 16. Phase 2 Submission and Team Review
+
+Use the [submission checklist](docs/phase2_submission_checklist.md) to prepare the local demo, gather the required evidence, explain the assigned tools, and review the remaining Phase 2 additions before merging. It identifies the historical model scope and the boundary between automated image release and locally initiated deployment.
 

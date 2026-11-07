@@ -1,0 +1,121 @@
+{
+  "checked_at_utc": "2026-11-06T06:55:39.941125+00:00",
+  "quality_gate_passed": true,
+  "checks": {
+    "python_3_12_and_sklearn_at_least_1_5": true,
+    "pytest_passed": true,
+    "same_input_and_date_splits": true,
+    "cold_start_features_and_route_dtype": true,
+    "candidate_beats_median_on_validation_and_test": true,
+    "Gradient Boosting Regressor_finite_positive": true,
+    "Gradient Boosting Regressor_reload_reproduces_scores": true,
+    "Gradient Boosting Regressor_logged_artifact_matches": true,
+    "Historical-Median Baseline_finite_positive": true,
+    "Historical-Median Baseline_reload_reproduces_scores": true,
+    "Historical-Median Baseline_logged_artifact_matches": true,
+    "demo_route_mae_improves": true
+  },
+  "pytest": {
+    "tests": 29,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "candidate": "Gradient Boosting Regressor",
+  "candidate_run_id": "66c819ceb83740c18d05800213524441",
+  "candidate_joblib_sha256": "b26d1a45f8e97278b8be70eef9c6c88e39b7d52537d55bea6a206b3391934a88",
+  "runtime": {
+    "python": "3.12.14",
+    "scikit-learn": "1.5.2",
+    "pandas": "2.2.2",
+    "numpy": "2.0.2",
+    "mlflow": "3.1.4"
+  },
+  "input_sha256": "243f568e1abc9d29e2fe9f665df36302a2aff61851438871de7ea4643dd5267b",
+  "split_dates_ist": {
+    "train": [
+      "2019-07-01",
+      "2019-07-02",
+      "2019-07-03"
+    ],
+    "validation": [
+      "2019-07-05"
+    ],
+    "test": [
+      "2019-07-08"
+    ]
+  },
+  "split_counts": {
+    "train": 408,
+    "validation": 102,
+    "test": 127
+  },
+  "validation_metrics": {
+    "Historical-Median Baseline": {
+      "mae_minutes": 3.2355099831336465,
+      "rmse_minutes": 4.368880622635027,
+      "mape_percent": 26.120824850719426,
+      "r2_score": 0.03917172252485468
+    },
+    "Random Forest Regressor": {
+      "mae_minutes": 2.492446930885372,
+      "rmse_minutes": 3.7184685657676955,
+      "mape_percent": 19.329031805373823,
+      "r2_score": 0.30396088039666846
+    },
+    "Gradient Boosting Regressor": {
+      "mae_minutes": 2.4739467045209045,
+      "rmse_minutes": 3.6882380966672446,
+      "mape_percent": 19.226193699952915,
+      "r2_score": 0.31523221782628685
+    }
+  },
+  "test_metrics": {
+    "Historical-Median Baseline": {
+      "mae_minutes": 4.270172827419021,
+      "rmse_minutes": 6.935320257590944,
+      "mape_percent": 27.494854222468373,
+      "r2_score": 0.04274488114427322
+    },
+    "Gradient Boosting Regressor": {
+      "mae_minutes": 3.6225757396594864,
+      "rmse_minutes": 6.3203839851307295,
+      "mape_percent": 22.041221662099105,
+      "r2_score": 0.20497353809595853
+    }
+  },
+  "per_segment_metrics": "test_by_segment.csv",
+  "demo_scope": {
+    "assessment": "historical_demo_only",
+    "route_id": "90",
+    "segment_id": "ORR_CHIRAG_TO_NEHRU_PLACE_EB",
+    "held_out_traversals": 36,
+    "metrics": {
+      "Gradient Boosting Regressor": {
+        "mae_minutes": 1.1660868236559416,
+        "rmse_minutes": 1.5992049290547825,
+        "mape_percent": 14.997622050322148,
+        "r2_score": 0.3395344795864772
+      },
+      "Historical-Median Baseline": {
+        "mae_minutes": 1.3032407157950927,
+        "rmse_minutes": 2.1280085893562215,
+        "mape_percent": 16.079980178948063,
+        "r2_score": -0.1694688650164784
+      }
+    }
+  },
+  "limitations": [
+    "This repeats previously evaluated 2019 dates in the release environment.",
+    "The demo is scoped to Route 90 eastbound. Other segments remain research coverage.",
+    "Current service accuracy and timetable-to-gate mapping remain unevaluated."
+  ],
+  "git_head": "e9abe216c8ce1c88ca3f2b2569032597f7d6b935",
+  "working_tree_source_sha256": {
+    "src/features/build_features.py": "a55cdbcfccbf81e63bce01445a07f081a014263abeefc804ec847df543a987cb",
+    "src/features/segment_config.py": "be9f8ba102712f0b1318c124d2c1fa50135bbb530e364d51d7d9de3a8ad78c40",
+    "src/models/train.py": "abd239db2cac75d63d629284e93e54b49f18a591df76ffe7a5db6efd8b680b8c",
+    "src/models/train_cold_start.py": "316a576b9e25e94f10b2c8df886aae0cd8b1612ce00bcd60650cb02036cbab58",
+    "tests/test_models.py": "d74db0ef5314e8e4b8d59626312656f170dab9d4dc1a1d3b706039a750e7262f"
+  }
+}

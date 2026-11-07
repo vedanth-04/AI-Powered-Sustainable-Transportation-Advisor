@@ -1,0 +1,6 @@
+services:
+  api:
+    image: ${BUS_IMAGE_REF:?Set the approved image digest}
+    ports:
+      - "127.0.0.1:${BUS_HTTP_PORT:-8000}:8000"
+    restart: unless-stopped
