@@ -257,3 +257,13 @@ See the [Phase 2 demo and teammate setup guide](docs/phase2_demo.md) for the cur
 
 The [captured Phase 2 evidence PDF](output/pdf/Phase_2_Demonstration_Evidence.pdf) includes the recorded test and runtime results with actual screenshots of the registry, API, Docker service, and successful CI/release runs.
 
+## 15. Reproduce Model Quality Approval and Registration
+
+Use the Python 3.12 release/test environment and the processed historical traversal CSV to repeat the model workflow in a new directory and local SQLite registry:
+
+```powershell
+.\.venv\Scripts\python.exe -m scripts.reproduce_model_workflow --traversals data/processed/phase2_cold_start/traversals.csv
+```
+
+The command runs Pytest, trains the comparison, verifies model quality and artifact provenance, registers the checked model, exports its bundle, and checks that bundle through FastAPI in process. Failures stop subsequent stages. A new timestamped output directory preserves each attempt. See the [reproduction guide](docs/phase2_reproduction.md) for the input data requirement, individual commands, result files, and the distinction between an independent local registry version and the published v1 release.
+

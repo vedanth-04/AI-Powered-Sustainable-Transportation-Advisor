@@ -122,6 +122,8 @@ Show the latest test result separately from the earlier 29-test release-quality 
 
 The `outputs` directory contains generated local evidence and is ignored by Git. A new clone includes the historical approval snapshots linked in section 3. It does not include this development machine's original output folder, training data, MLflow database, or local artifact store. Keep those files for the original project demonstration. The snapshots document the existing approval; the exporter consumes the original local reports. Recreating the full approval and registration from a fresh clone requires the data/artifacts and additional quality-gate/registration orchestration, which is not currently provided as a single repository command.
 
+**Reproduction update, 7 November 2026:** A [single-command model approval workflow](phase2_reproduction.md) is now provided. With the processed traversal data and Python 3.12 test environment available, it repeats tests, training, quality checks, registration, bundle export, and an in-process API check in a new directory. The paragraph above records the earlier implementation gap. The deployed v1 image and its historical approval records remain separate from each reproduction run.
+
 ## 6. Open the correct MLflow registry
 
 On the original development machine, start MLflow against the Phase 2 SQLite database. A plain `mlflow ui` can open a different default store.
