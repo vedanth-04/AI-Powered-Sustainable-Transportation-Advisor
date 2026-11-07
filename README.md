@@ -230,3 +230,16 @@ The upload stores only the approved model and manifest in the versioned Actions 
 
 A fresh runner pulls the published image by digest and repeats the HTTP smoke test. Use the digest from the successful **Phase 2 Model v1 Release** run summary as the deployment reference.
 
+## 13. Phase 2 Deployment on Windows with WSL 2
+
+Start Docker Desktop's Linux engine and run the deployment from PowerShell in the repository root. Authenticate Docker to GHCR first if the package requires pull access.
+
+```powershell
+docker login ghcr.io
+.\.venv\Scripts\python.exe -m scripts.deploy_api --port 8001
+```
+
+The deployment uses the image digest in `deploy/model-v1.json`. It pulls the image, starts a dedicated Docker Compose service, waits for readiness, and checks the model version, Route 90 prediction, and rejection of an unsupported route. The active and prior release records are stored in `outputs/phase2_deploy/state.json`. A failed update restores the prior release and reports the failure.
+
+Open [Swagger UI on port 8001](http://127.0.0.1:8001/docs) and try the request from section 9. For the demo, show the successful GitHub release run and the same image responding on the Windows host. GitHub Actions automates CI and image publication. The command above starts the workstation deployment, with the port published to localhost.
+

@@ -1,0 +1,6 @@
+{
+  "image": "ghcr.io/vedanth-04/ai-powered-sustainable-transportation-advisor/bus-travel-time@sha256:0250462721176db01d63cd77f93ba7647dd7c94890dc1f7d6e7025e85e2b5dad",
+  "model_version": 1,
+  "expected_minutes": 6.320402254818158,
+  "release_run": "https://github.com/vedanth-04/AI-Powered-Sustainable-Transportation-Advisor/actions/runs/42330318360"
+}
