@@ -2,6 +2,21 @@
 
 An applied MLOps project for predicting urban bus-segment travel times using real-world Delhi bus GPS observations, designed to enable accurate, reliable, and sustainable public transit journey planning.
 
+## Phase 2 local demo quick start
+
+After the Phase 2 additions in [PR #3](https://github.com/vedanth-04/AI-Powered-Sustainable-Transportation-Advisor/pull/3) are merged, teammates can use the default `main` branch. Install Git, Python 3.12, and Docker Desktop with its WSL 2 Linux engine running, then run these commands in PowerShell:
+
+```powershell
+git clone https://github.com/vedanth-04/AI-Powered-Sustainable-Transportation-Advisor.git
+cd AI-Powered-Sustainable-Transportation-Advisor
+py -3.12 -m scripts.deploy_api --port 8001
+py -3.12 -m scripts.verify_deployment
+```
+
+Open [the local API documentation](http://127.0.0.1:8001/docs) and use the Route 90 request in section 9. If GHCR requires authentication, follow the [teammate setup instructions](docs/phase2_demo.md#8-teammate-setup-from-a-fresh-clone). The published image contains the approved model and inference dependencies. Training reproduction additionally requires the processed input data and the Python training environment described in the [reproduction guide](docs/phase2_reproduction.md).
+
+The Phase 2 demonstration includes model tests and quality checks, MLflow registration, FastAPI, Docker, automated CI and image delivery, and a locally initiated Windows deployment. The [submission checklist](docs/phase2_submission_checklist.md) maps the requirements to the evidence and presentation order.
+
 ---
 
 ## 1. Problem Statement

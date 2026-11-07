@@ -4,6 +4,8 @@ The implemented scope covers model tests, model quality/risk checks, a numbered 
 
 The API, CI and image-release code reached `main` through earlier pull requests. The later deployment, evidence and reproducible approval additions are on `phase2/model-quality` until their pull request is merged. Use that branch when sharing the complete workflow before the merge. This checklist is a demonstration handoff; it does not merge branches or release another model.
 
+**Final integration:** [PR #3](https://github.com/vedanth-04/AI-Powered-Sustainable-Transportation-Advisor/pull/3) carries these remaining additions. Once its status is **Merged**, use `main` for the complete Phase 2 workflow. The repository README provides a fresh-clone deployment quick start. Existing teammates can update a clean `main` checkout with `git switch main` followed by `git pull --ff-only`.
+
 ## 1. Material to submit or share
 
 | Item | Location | Purpose |
