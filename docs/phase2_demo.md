@@ -200,3 +200,18 @@ Local runtime verification and historical model evaluation are separate evidence
 ## 10. Suggested classroom explanation
 
 “We trained a median baseline, Random Forest, and Gradient Boosting using date-separated historical bus traversals. Gradient Boosting was selected on validation error. The release quality checks verified the feature policy, historical error, positive predictions, reload behavior, and artifact checksums. We registered the approved model as version 1 in MLflow, exported it using Joblib, and served it through FastAPI. Docker packages the model and inference dependencies. GitHub Actions tests the source, builds and verifies the serving image, and publishes the approved release to GHCR. We then run the scripted deployment on this Windows PC and verify the pinned image and HTTP responses. This release demonstrates the historical Route 90 eastbound segment.”
+
+## 11. Captured demonstration report
+
+The [nine-page evidence PDF](../output/pdf/Phase_2_Demonstration_Evidence.pdf) contains the recorded 58-test result, eight runtime checks, historical model evaluation, and real screenshots of readiness, successful prediction, request rejection, MLflow registry version 1, Docker, CI, and image release. Its timestamps distinguish the original checks from the later report assembly. The MLflow screenshot uses a dashboard backed by a copy of the local registry, on port 5001. The original registry was checked separately in read-only mode.
+
+On the original demo machine, raw screenshots and JSON/JUnit inputs are under `outputs/phase2_demo`. These generated files stay outside Git. The PDF is self-contained and can be shared with teammates from this branch. The MLflow dashboard is a temporary local demonstration process; start the UI again when needed using the command in section 6.
+
+To regenerate this report after collecting the input files, use a reporting environment with ReportLab installed:
+
+```powershell
+python -m pip install reportlab
+python -m scripts.build_demo_report
+```
+
+ReportLab is a document-generation dependency. The inference container and standard-library deployment helpers keep their existing dependencies. The report generator reads existing evidence and does not execute tests or collect fresh observations. It needs `deployment_check.json`, `registry_check.json`, `ci_run.json`, and `pytest.xml` in `outputs/phase2_demo`, plus the historical approval snapshots. Screenshots are read from `outputs/phase2_demo/screenshots`: `api_health.jpg`, `api_prediction.jpg`, `api_rejection.jpg`, `mlflow_registry.jpg`, `docker_container.png`, `github_ci.jpg`, and `github_release.jpg`. A missing screenshot is explicitly marked in the generated report. Inspect a regenerated PDF before presenting it.

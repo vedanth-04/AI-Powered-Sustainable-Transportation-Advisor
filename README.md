@@ -255,3 +255,5 @@ The command uses the recorded deployment port and writes `outputs/phase2_demo/de
 
 See the [Phase 2 demo and teammate setup guide](docs/phase2_demo.md) for the current Gradient Boosting v1 results, quality and registry evidence, Windows setup, and the classroom demonstration sequence. The earlier benchmark results in section 8 describe a different experiment from the deployed `cold_start_v1` model.
 
+The [captured Phase 2 evidence PDF](output/pdf/Phase_2_Demonstration_Evidence.pdf) includes the recorded test and runtime results with actual screenshots of the registry, API, Docker service, and successful CI/release runs.
+
