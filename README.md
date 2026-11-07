@@ -267,3 +267,7 @@ Use the Python 3.12 release/test environment and the processed historical traver
 
 The command runs Pytest, trains the comparison, verifies model quality and artifact provenance, registers the checked model, exports its bundle, and checks that bundle through FastAPI in process. Failures stop subsequent stages. A new timestamped output directory preserves each attempt. See the [reproduction guide](docs/phase2_reproduction.md) for the input data requirement, individual commands, result files, and the distinction between an independent local registry version and the published v1 release.
 
+## 16. Phase 2 Submission and Team Review
+
+Use the [submission checklist](docs/phase2_submission_checklist.md) to prepare the local demo, gather the required evidence, explain the assigned tools, and review the remaining Phase 2 additions before merging. It identifies the historical model scope and the boundary between automated image release and locally initiated deployment.
+
