@@ -196,3 +196,37 @@ Open [Swagger UI](http://127.0.0.1:8000/docs) and try `POST /predict/bus`.
 
 The prediction returns segment riding time in minutes, the model version, and the cold-start policy. `GET /health` reports readiness. Invalid requests and routes outside the approved historical demo receive HTTP 422. An unavailable or invalid bundle returns HTTP 503.
 
+## 10. Phase 2 Docker Demo
+
+Start Docker Desktop in Linux container mode. From the repository root, export the approved model bundle, build the image, and run it on localhost.
+
+```powershell
+.\.venv\Scripts\python.exe -m src.models.export_serving_bundle
+docker build --tag bus-travel-time:phase2-v1 .
+docker run --rm --name bus-travel-time-demo --publish 127.0.0.1:8000:8000 bus-travel-time:phase2-v1
+```
+
+The build includes the two verified bundle files under `outputs/phase2_serving`. A fresh checkout needs this bundle before building. The running container uses the bundled artifact and verifies its checksum at startup.
+
+In another PowerShell terminal, run `Invoke-RestMethod http://127.0.0.1:8000/health` and check for `ready` and model version `1`. Open [Swagger UI](http://127.0.0.1:8000/docs) and submit the Route 90 request from section 9. Version 1 should return approximately **6.32 minutes**. Use Ctrl+C in the container terminal to stop the demo.
+
+## 11. Phase 2 Continuous Integration
+
+The **Phase 2 CI** workflow runs on pull requests and pushes to `main` or `phase2/model-quality`. In the repository's **Actions** tab, open the run for your commit and check the Pytest, Docker build, and HTTP smoke-test steps.
+
+The runner creates a synthetic Route 90 model bundle in its fresh checkout. The Docker smoke test checks readiness, a fixture prediction of **6.25 minutes**, and HTTP 422 for an unsupported route. The 6.32-minute result in section 10 comes from the approved model. CI uses the fixture to check the build and API contract without needing access to the local registry or GPS data.
+
+## 12. Phase 2 Model v1 Image Release
+
+Push the Phase 2 source commit and wait for CI to pass on it. Export the approved bundle as in section 9. With GitHub CLI authenticated for the repository and permission to set Actions secrets, upload the verified bundle before pushing the release tag on that commit.
+
+```powershell
+.\.venv\Scripts\python.exe -m scripts.release_bundle upload --repo vedanth-04/AI-Powered-Sustainable-Transportation-Advisor
+git tag phase2-image-v1
+git push origin refs/tags/phase2-image-v1
+```
+
+The upload stores only the approved model and manifest in the versioned Actions secrets `PHASE2_MODEL_V1_PART_1` and `PHASE2_MODEL_V1_PART_2`. The tagged workflow checks both file hashes before building and checks the approved Route 90 prediction before pushing `ghcr.io/vedanth-04/ai-powered-sustainable-transportation-advisor/bus-travel-time:v1`.
+
+A fresh runner pulls the published image by digest and repeats the HTTP smoke test. Use the digest from the successful **Phase 2 Model v1 Release** run summary as the deployment reference.
+
