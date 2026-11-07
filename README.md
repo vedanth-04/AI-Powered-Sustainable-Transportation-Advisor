@@ -243,3 +243,15 @@ The deployment uses the image digest in `deploy/model-v1.json`. It pulls the ima
 
 Open [Swagger UI on port 8001](http://127.0.0.1:8001/docs) and try the request from section 9. For the demo, show the successful GitHub release run and the same image responding on the Windows host. GitHub Actions automates CI and image publication. The command above starts the workstation deployment, with the port published to localhost.
 
+## 14. Phase 2 Verification and Team Demonstration
+
+After deployment, save a read-only check of the actual container digest, readiness, prediction, and request validation:
+
+```powershell
+.\.venv\Scripts\python.exe -m scripts.verify_deployment
+```
+
+The command uses the recorded deployment port and writes `outputs/phase2_demo/deployment_check.json`. It exits with an error if the deployment differs from the approved release or an API check fails. Runtime evidence is separate from model accuracy evaluation.
+
+See the [Phase 2 demo and teammate setup guide](docs/phase2_demo.md) for the current Gradient Boosting v1 results, quality and registry evidence, Windows setup, and the classroom demonstration sequence. The earlier benchmark results in section 8 describe a different experiment from the deployed `cold_start_v1` model.
+

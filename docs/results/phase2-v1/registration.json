@@ -1,0 +1,14 @@
+{
+  "model_name": "BusTravelTimePredictor",
+  "version": 1,
+  "status": "READY",
+  "model_uri": "models:/BusTravelTimePredictor/1",
+  "source_model": "models:/m-ad4ae0496b454ca8b2234f58784fc8d5",
+  "training_run_id": "66c819ceb83740c18d05800213524441",
+  "joblib_sha256": "b26d1a45f8e97278b8be70eef9c6c88e39b7d52537d55bea6a206b3391934a88",
+  "quality_report": "quality_report.json",
+  "approved_scope": "historical_demo_only",
+  "verified_predictions": 127,
+  "tracking_store_path": "outputs/phase2_registry/tracking.db",
+  "snapshot_note": "The machine-specific absolute tracking URI was replaced with a repository-relative store path; other recorded fields are preserved."
+}
