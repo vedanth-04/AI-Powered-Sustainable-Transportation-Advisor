@@ -216,3 +216,17 @@ The **Phase 2 CI** workflow runs on pull requests and pushes to `main` or `phase
 
 The runner creates a synthetic Route 90 model bundle in its fresh checkout. The Docker smoke test checks readiness, a fixture prediction of **6.25 minutes**, and HTTP 422 for an unsupported route. The 6.32-minute result in section 10 comes from the approved model. CI uses the fixture to check the build and API contract without needing access to the local registry or GPS data.
 
+## 12. Phase 2 Model v1 Image Release
+
+Push the Phase 2 source commit and wait for CI to pass on it. Export the approved bundle as in section 9. With GitHub CLI authenticated for the repository and permission to set Actions secrets, upload the verified bundle before pushing the release tag on that commit.
+
+```powershell
+.\.venv\Scripts\python.exe -m scripts.release_bundle upload --repo vedanth-04/AI-Powered-Sustainable-Transportation-Advisor
+git tag phase2-image-v1
+git push origin refs/tags/phase2-image-v1
+```
+
+The upload stores only the approved model and manifest in the versioned Actions secrets `PHASE2_MODEL_V1_PART_1` and `PHASE2_MODEL_V1_PART_2`. The tagged workflow checks both file hashes before building and checks the approved Route 90 prediction before pushing `ghcr.io/vedanth-04/ai-powered-sustainable-transportation-advisor/bus-travel-time:v1`.
+
+A fresh runner pulls the published image by digest and repeats the HTTP smoke test. Use the digest from the successful **Phase 2 Model v1 Release** run summary as the deployment reference.
+

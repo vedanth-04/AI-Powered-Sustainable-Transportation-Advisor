@@ -49,29 +49,4 @@ jobs:
         run: docker build --tag bus-travel-time:ci .
 
       - name: Check readiness and prediction over HTTP
-        shell: bash
-        run: |
-          set -euo pipefail
-          container=$(docker run --detach --publish 127.0.0.1::8000 bus-travel-time:ci)
-          cleanup() {
-            status=$?
-            if [ "$status" -ne 0 ]; then docker logs "$container" || true; fi
-            docker rm --force "$container" >/dev/null || true
-            exit "$status"
-          }
-          trap cleanup EXIT
-
-          for attempt in {1..30}; do
-            health=$(docker inspect --format '{{.State.Health.Status}}' "$container")
-            if [ "$health" = healthy ]; then break; fi
-            if [ "$health" = unhealthy ]; then exit 1; fi
-            sleep 2
-          done
-          if [ "$health" != healthy ]; then
-            echo "Container did not become ready before the timeout." >&2
-            exit 1
-          fi
-
-          address=$(docker port "$container" 8000/tcp)
-          python -m scripts.smoke_api --base-url "http://$address" \
-            --expected-minutes 6.25 --model-version 1
+        run: bash scripts/smoke_container.sh bus-travel-time:ci 1 6.25
