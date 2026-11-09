@@ -139,3 +139,27 @@ def test_invalid_release_metadata_is_rejected(deployment, field, value):
     record = {**asdict(candidate), field: value}
     with pytest.raises(ValueError):
         deploy_api.parse_deployment(record)
+
+
+def test_lock_prevents_any_docker_operation(deployment):
+    release_file, state_dir, _, calls = deployment
+    state_dir.mkdir()
+    (state_dir / '.deploy.lock').mkdir()
+    with pytest.raises(RuntimeError, match='lock already exists'):
+        deploy_api.deploy(release_file, state_dir, 8001)
+    assert calls == []
+    assert (state_dir / '.deploy.lock').exists()
+
+
+def test_failed_recovery_is_reported_without_falsifying_state(deployment, monkeypatch):
+    release_file, state_dir, candidate, _ = deployment
+    state_dir.mkdir()
+    deploy_api.write_state(state_dir / 'state.json', candidate, None)
+    before = (state_dir / 'state.json').read_bytes()
+    def fail(*args):
+        raise RuntimeError('service unavailable')
+    monkeypatch.setattr(deploy_api, 'activate', fail)
+    with pytest.raises(RuntimeError, match='and recovery failed'):
+        deploy_api.deploy(release_file, state_dir, 8002)
+    assert (state_dir / 'state.json').read_bytes() == before
+    assert not (state_dir / '.deploy.lock').exists()
