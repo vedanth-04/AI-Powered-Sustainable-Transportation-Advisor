@@ -72,11 +72,13 @@ Code is in `src/data`, `src/features`, `src/models` and `src/api`; orchestration
 
 For development on Windows with CPython 3.12, run `powershell -File scripts/setup_dev.ps1 -RunTests`. This creates a new `.venv-dev`, installs the complete `requirements-dev.lock.txt`, checks dependencies and pins, and runs tests. It refuses to replace an existing environment. `requirements.txt` and `requirements-ci.txt` use this development lock; the approved Docker serving lock remains separate. See the [reproduction guide](docs/phase2_reproduction.md) for commands and evidence.
 
-The November 9 fixture suite passed 80 tests with 61 warnings after isolated MLflow/SQLAlchemy alignment. Its mixed test environment still fails dependency checks; the running Linux image independently passes its serving lock and dependency checks.
+The earlier November 9 audit suite passed 80 tests with 61 warnings after isolated MLflow/SQLAlchemy alignment, but its mixed environment failed dependency checks. Those historical attempts remain recorded. The subsequent clean implementation environment and the running Linux image independently pass dependency checks.
 
 Run the full existing suite in a prepared test environment with `python -m pytest tests -q`. The [reproduction guide](docs/phase2_reproduction.md) describes fresh output directories and the required 637-row processed input. Do not run training/export into the approved release or replace the live model during a documentation/demo exercise.
 
 ## CI, delivery and remaining scope
+
+Final November 9 verification: **112 tests passed, 75 warnings** locally; the same 112 tests, pip check and exact isolated lock passed on both Windows and Linux [CI](https://github.com/vedanth-04/AI-Powered-Sustainable-Transportation-Advisor/actions/runs/42637692207). Linux also built and smoked the synthetic CI image. The separate approved live v1 still passed 8/8 deployment checks and real smoke, with the same healthy container. Complete commands/failures/fixes remain under ignored `outputs/local_setup/implementation-20261109-140155/`; the existing validation JSON contains the sanitized batch results.
 
 November 9 implementation adds a versioned provenance manifest and full approval revalidation at registration/export, registry approval hash tags, held-out prediction parity and trusted manifest-pin support. Legacy v1 loading is verified on a separate copy of the actual approved model. New release export requires DVC lineage and clean source; research fixtures are explicitly ineligible. Batch C passed 104 full-suite tests plus 8 lineage tests. Shared registry infrastructure and the missing multi-day input remain blockers; no new real release or image was created.
 

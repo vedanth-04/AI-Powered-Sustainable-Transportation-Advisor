@@ -1,5 +1,7 @@
 # Phase 2 demonstration and teammate deployment guide
 
+Latest verification: **112 passed, 75 warnings**, with clean pip/lock checks on this laptop and both Windows/Linux [CI](https://github.com/vedanth-04/AI-Powered-Sustainable-Transportation-Advisor/actions/runs/42637692207). Linux's 6.25-minute synthetic smoke is separate from the live approved model's 6.320402254818158-minute prediction. The live v1 remains the original healthy container and passed 8/8 + real smoke. Show the appended batch record in `docs/results/2026-11-09-validation/summary.json`; earlier failed attempts and historical model metrics are preserved.
+
 Batch C demonstrates manifest v2 and approval/export integrity through isolated fixture tests (`tests/test_registration.py`, `tests/test_quality.py`, `tests/test_release_lineage.py`). New exports compare every held-out prediction and record honest eligibility; SHA-only research inputs cannot become eligible releases. The unchanged actual v1 bundle also passed the updated loader/API checks. Do not present fixture registries as the absent original/shared registry or claim that a v2 image has been published.
 
 For the new daily-sample pipeline, show `python -m dvc dag`, `python -m dvc status` and `data/processed/sample_cold_start/features.lineage.json` in the clean environment. Batch B generated 152 real sample rows, repeated without processing, and passed 82 tests. Keep this one-day preparation separate from the historical 637-row model approval.
@@ -118,13 +120,14 @@ If port 8001 is occupied, choose an available port when deploying. The verifier 
 Use the development environment with test dependencies installed:
 
 ```powershell
-New-Item -ItemType Directory -Force outputs/phase2_demo | Out-Null
-.\.venv\Scripts\python.exe -m pytest tests -q --junitxml=outputs/phase2_demo/pytest.xml
+$demoEvidence = 'outputs/local_setup/demo-tests-' + [guid]::NewGuid().ToString('N')
+New-Item -ItemType Directory $demoEvidence | Out-Null
+.\.venv-dev\Scripts\python.exe -m pytest tests -q "--junitxml=$demoEvidence/pytest.xml"
 Get-Content docs/results/phase2-v1/quality_report.json
 Get-Content docs/results/phase2-v1/registration.json
 ```
 
-On the November 9 laptop, the original virtual environment deliberately remains unchanged and does not have pytest. Show the actual 80-test run in outputs/local_setup/project-audit-20261109-132719/pytest-final.xml and pytest-final.log. The final mixed test environment passes fixtures but still fails pip check; it is not a release-approval environment.
+On the November 9 laptop, the original virtual environment remains unchanged. Show the new 112-test run in `outputs/local_setup/implementation-20261109-140155/pytest-final.xml` and `pytest-final.log`, plus `pip-check-final.log` and `environment-final.json`. Earlier 80-test mixed-environment audit logs remain under `outputs/local_setup/project-audit-20261109-132719/`; their dependency failure is historical and does not describe the new clean environment.
 
 Show the latest test result separately from the earlier 29-test release-quality record. Explain one date-split/feature test, one API validation test, and one failed-deployment recovery test. This connects the tests to model reliability and deployment behavior.
 
@@ -253,9 +256,9 @@ Do not run the default deployment command against this existing Compose project:
 1. **Problem and scope:** show the README and Phase 1 slides. Explain multimodal planning as the proposed product; today's model predicts one segment's riding time, excluding access, waiting and transfers.
 2. **History and data:** open the [chronology](summaries/pipeline_overview.md), DVC pointer and corrected EDA. Show `git log --date=short --format="%h %ad %an %s"`; verify the sample with `Get-FileHash data/raw/2019-07-01.db -Algorithm MD5`. Do not expose local DVC credentials.
 3. **Labels and model comparison:** show entry/exit gate code, 12 inputs and the [corrected Phase 1 CSV](results/2026-10-16-corrected/model_comparison.csv). Explain why the older 0.62-minute score is superseded. Then show the separate Phase 2 quality/registry snapshots and cold-start policy. Selection used validation MAE; historical test accuracy is not current-traffic accuracy.
-4. **Tests and registry:** show the actual November 9 result (80 passed, 61 warnings after isolated dependency alignment, with earlier failed runs retained) and dependency qualifications in the [audit](phase2_submission_checklist.md). Feature parity, cutoff, tampering and temporary-registry fixtures exercise the workflow. Use the original MLflow UI only if its original database exists; otherwise label the [PDF](../output/pdf/Phase_2_Demonstration_Evidence.pdf) registry screenshot as historical evidence.
+4. **Tests and registry:** show the clean 112-test result and passing dependency/lock checks in the [audit](phase2_submission_checklist.md); retain the earlier mixed-environment results as history. Show DVC lineage, feature/cutoff tests, losing/unauthorized cases and v2 export parity in temporary-registry fixtures. Use the original MLflow UI only if its original database exists; otherwise label the [PDF](../output/pdf/Phase_2_Demonstration_Evidence.pdf) registry screenshot as historical evidence.
 5. **Live serving:** use the existing-instance verifier/smoke commands above; show Docker Desktop and [Swagger](http://127.0.0.1:8001/docs). Submit the section 4 payload, show model v1, policy and minutes, then change the route to `999` to obtain HTTP 422. A response is a serving check, not an MAE measurement.
-6. **Delivery and limits:** open [CI for the inspected main snapshot](https://github.com/vedanth-04/AI-Powered-Sustainable-Transportation-Advisor/actions/runs/42342969930), [v1 image release](https://github.com/vedanth-04/AI-Powered-Sustainable-Transportation-Advisor/actions/runs/42330318360), and the pinned digest. Explain synthetic CI (6.25) versus the approved real model (6.3204). Show the remaining guide gaps; no protected VM deployment or new production model was performed.
+6. **Delivery and limits:** open [Windows/Linux implementation CI](https://github.com/vedanth-04/AI-Powered-Sustainable-Transportation-Advisor/actions/runs/42637692207), [v1 image release](https://github.com/vedanth-04/AI-Powered-Sustainable-Transportation-Advisor/actions/runs/42330318360), and the pinned digest. Explain synthetic CI (6.25) versus the approved real model (6.3204). Show the remaining guide gaps; no protected VM deployment or new production model was performed.
 
 Keep the original PDF's 58-test screenshot, the November 7 documented 80-test reproduction, and November 9's actual suite outcome separate. For the complete requirement status, including failures and blocked reproduction, use the [audit checklist](phase2_submission_checklist.md).
 
@@ -263,7 +266,7 @@ Keep the original PDF's 58-test screenshot, the November 7 documented 80-test re
 
 The original README's source-build procedure is retained here for a machine with an approved export and compatible Python environment. This is not required to run the published image, and it was not executed during the November 9 audit. The original reports, registry and exported bundle are absent on the second laptop; the sanitized committed registry snapshot is not an exporter input.
 
-When the original approved reports and registry are available, `python -m src.models.export_serving_bundle` checks them and exports to `outputs/phase2_serving`. Only after verifying the approved bundle exists, a source-image check can use:
+The current exporter requires a fresh schema-2 approval and matching checked registry; old snapshot JSON cannot replace those inputs. The recipe below applies only to an already approved legacy v1 bundle compatible with the frozen serving lock. A future v2 bundle needs a separately validated matching serving runtime before building; no eligible v2 image was created here. Only after verifying the legacy approved bundle exists, a separate source-image check can use:
 
 ```powershell
 Get-FileHash outputs/phase2_serving/model.joblib -Algorithm SHA256

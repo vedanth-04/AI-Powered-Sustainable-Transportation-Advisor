@@ -4,6 +4,8 @@ The deployed image demonstrates the approved historical Route 90 model. The comm
 
 ## Prerequisites
 
+**Final implementation verification, November 9:** 112 tests passed locally (75 warnings, 390.10 s), Windows CI (110.62 s) and Linux CI (75.59 s). All three isolated environments passed pip check and complete lock validation. [CI evidence](https://github.com/vedanth-04/AI-Powered-Sustainable-Transportation-Advisor/actions/runs/42637692207) additionally covers the Linux synthetic Docker build/smoke. Windows uses Python 3.12.10 because later security-only 3.12 versions have no setup-python Windows installer; Linux uses 3.12.14. CI creates its own venv so preinstalled runner pipx cannot conflict with the project's MLflow-compatible packaging pin. Prior installer/runner failures are retained in the local evidence and appended summary; pins were not relaxed.
+
 ### Available daily-sample DVC pipeline
 
 With the clean environment installed and `data/raw/2019-07-01.db` restored using your existing private DVC credentials:
@@ -13,6 +15,8 @@ With the clean environment installed and `data/raw/2019-07-01.db` restored using
 $env:PATH = (Join-Path $PWD '.venv-dev/Scripts') + ';' + $env:PATH
 python -m dvc status
 python -m dvc dag
+# Only if the daily raw DB is absent, fetch that existing remote object:
+# python -m dvc pull data/raw/2019-07-01.db.dvc
 python -m dvc repro
 python -m dvc status
 ```
@@ -37,7 +41,7 @@ powershell -File scripts/setup_dev.ps1 -RunTests
 
 The setup helper refuses an existing destination; use `-EnvironmentPath .venv-dev-2` for another isolated installation. It records a transcript, package consistency, lock validation and optional JUnit results under ignored `outputs/local_setup/environment-<unique-id>`. No activation or global Python changes are required. `requirements-dev.in` records direct dependencies; `requirements-dev.lock.txt` pins the full resolved environment, including platform markers. Regenerate only in a fresh environment and validate with pip check and tests. Notebook tools are optional and excluded from this model/test environment; install them separately if needed. Windows and Linux CI use this same test lock; Docker retains `requirements-serve.lock.txt` unchanged.
 
-The earlier host/mixed environment fails because its MLflow/SQLAlchemy versions and pandas/pyarrow/cachetools/importlib-metadata/packaging constraints conflict, with greenlet missing in the borrowed test environment. The clean environment pins MLflow/skinny 3.1.4, SQLAlchemy 2.0.57 and compatible scientific libraries, resolving dependencies normally. Earlier audit failures below remain historical evidence. A development lock does not prove byte-for-byte reproduction of the unavailable historical training store.
+The final read-only diagnosis distinguishes three old environments. System Python fails pip check: Protobuf 7.35.1 conflicts with Google API/Firestore/proto-plus bounds, and NumPy 2.5.2 exceeds Numba's bound; an invalid leftover `~treamlit` distribution is also reported. The original `.venv` passes pip check, but its MLflow 3.17.1/SQLAlchemy 2.1.4 stack produced earlier registration incompatibilities. The borrowed audit test environment separately lacked greenlet and violated MLflow constraints on pandas/pyarrow/cachetools/importlib-metadata/packaging. None was modified. The new environment pins MLflow/skinny 3.1.4, SQLAlchemy 2.0.57 and compatible scientific libraries, resolving dependencies normally. Earlier audit outcomes remain historical evidence. A development lock does not prove byte-for-byte reproduction of the unavailable historical training store.
 
 Use Python 3.12 with an explicitly recorded test environment. Do not assume an existing `.venv` matches the original release. For a fresh clone, create a Python 3.12 environment and install `requirements-ci.txt`; it includes the inference dependencies and the additional training/test tools. Run commands from the repository root. Docker is used for the already published API deployment; this model reproduction command runs in Python.
 
@@ -160,4 +164,4 @@ Installing `requirements-ci.txt` in a new Windows environment failed on unavaila
 
 The complete November 9 existing suite ultimately passed **80 tests** after isolated MLflow/MLflow-skinny 3.1.4 and SQLAlchemy 2.0.57 installation. Earlier runs failed as recorded in the audit. Other development packages still differ from release pins; this is fixture verification, not exact release reproduction.
 
-**Environment limitation:** the final fixture suite passed, but `pip check` on the mixed test environment still failed (missing greenlet and MLflow constraints on pandas, pyarrow, cachetools, importlib-metadata and packaging). Do not use this mixed environment to approve or retrain a real release. The running Linux image independently passed its lock comparison and `pip check`. Full logs and exact versions are recorded in the sanitized validation JSON.
+**Historical audit environment limitation:** the earlier audit fixture suite passed, but `pip check` on the mixed test environment still failed (missing greenlet and MLflow constraints on pandas, pyarrow, cachetools, importlib-metadata and packaging). Do not use this mixed environment to approve or retrain a real release. The running Linux image independently passed its lock comparison and `pip check`. Full logs and exact versions are recorded in the sanitized validation JSON.

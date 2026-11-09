@@ -435,6 +435,119 @@
         "seconds": 48.36,
         "note": "Expanded evaluated sources to include baseline/evaluation/API/environment verifier; quality + real fixture registration/export + lineage rechecked"
       }
+    },
+    "D": {
+      "tested_application_source": "2971f45ef704d5c71195051ac43163eeb667068e",
+      "ci_isolation_commit": "9a2f2fbc5b9ff851b8b1c04bcd50f9fca6b648e6",
+      "pytest": {
+        "tests": 112,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "passed": 112,
+        "warnings": 75,
+        "seconds": 390.1
+      },
+      "dependency_check": "PASS; all exact active lock pins within isolated venv, resolver confirmation succeeded, pip check clean",
+      "original_system_python": "Still fails: Protobuf 7.35.1 versus Google API/Firestore/proto-plus bounds; NumPy 2.5.2 versus Numba bound; invalid leftover ~treamlit warning. Unchanged.",
+      "original_venv": "pip check PASS; MLflow 3.17.1 / SQLAlchemy 2.1.4 / NumPy 2.5.4 / pandas 3.0.6 / sklearn 1.9.1 unchanged; earlier registration incompatibility remains recorded",
+      "dvc_status": "Raw pointer + both stages skipped; up to date",
+      "approved_release_preservation": "Same healthy container ID; no diff to raw pointer, deploy/model-v1.json or requirements-serve.lock.txt versus bedd5fa; copied actual v1 passes new loader",
+      "static_checks": {
+        "relative_links_checked": 115,
+        "python_examples_parsed": 1,
+        "python_sources_parsed": true,
+        "workflow_consistency": "PASS",
+        "errors": []
+      },
+      "powershell_checks": {
+        "powershell_blocks": 28,
+        "errors": []
+      },
+      "updated_requirement_counts": {
+        "V": 30,
+        "I": 1,
+        "P": 21,
+        "M": 3,
+        "B": 3
+      },
+      "scope": "Verified local fixture code and daily-data lineage; no original multi-day training, shared registry, new image publication or remote deployment",
+      "commands": [
+        "<new-python> -m pip install --disable-pip-version-check -r requirements-dev.lock.txt",
+        "<new-python> -m pip check",
+        "<new-python> -B -m scripts.verify_environment --require-venv",
+        "<new-python> -B -m pytest tests -q --basetemp=C:/Users/bveda/AppData/Local/Temp/p2-d-all-140155 --junitxml=outputs/local_setup/implementation-20261109-140155/pytest-final.xml -o cache_dir=outputs/local_setup/implementation-20261109-140155/pytest-cache"
+      ],
+      "local_execution_ledger": "outputs/local_setup/implementation-20261109-140155/commands-and-results.md",
+      "checked_at_utc": "2026-11-09T14:49:49.548438+00:00",
+      "ci": {
+        "run_id": 42637692207,
+        "url": "https://github.com/vedanth-04/AI-Powered-Sustainable-Transportation-Advisor/actions/runs/42637692207",
+        "commit": "9a2f2fbc5b9ff851b8b1c04bcd50f9fca6b648e6",
+        "conclusion": "success",
+        "windows": {
+          "python": "3.12.10",
+          "tests": 112,
+          "warnings": 75,
+          "seconds": 110.62,
+          "pip_check": "PASS",
+          "isolated_lock": "PASS",
+          "docker": "Skipped by design"
+        },
+        "linux": {
+          "python": "3.12.14",
+          "tests": 112,
+          "warnings": 75,
+          "seconds": 75.59,
+          "pip_check": "PASS",
+          "isolated_lock": "PASS",
+          "container_build": "PASS",
+          "synthetic_smoke": "PASS, 6.25 minutes; not approved-model accuracy"
+        }
+      },
+      "commits_pushed": {
+        "A": "f2920cc3fa317e23068394e7fc8c8521ff6f0fd0",
+        "B": "d9a2dfc09f52670328b57aaf3e246e390d625bae",
+        "C": "2971f45ef704d5c71195051ac43163eeb667068e",
+        "D_ci_isolation": "9a2f2fbc5b9ff851b8b1c04bcd50f9fca6b648e6"
+      },
+      "setup_existing_environment_guard": "Verified: powershell -NoProfile -File scripts/setup_dev.ps1 -EnvironmentPath .venv refused existing environment with exit 1 before installing or modifying files",
+      "changed_files": [
+        ".dockerignore",
+        ".dvcignore",
+        ".github/workflows/ci.yml",
+        ".gitignore",
+        "Dockerfile",
+        "README.md",
+        "docs/phase2_demo.md",
+        "docs/phase2_reproduction.md",
+        "docs/phase2_submission_checklist.md",
+        "docs/results/2026-11-09-validation/summary.json",
+        "docs/summaries/pipeline_overview.md",
+        "dvc.lock",
+        "dvc.yaml",
+        "requirements-ci.txt",
+        "requirements-dev.in",
+        "requirements-dev.lock.txt",
+        "requirements.txt",
+        "scripts/reproduce_model_workflow.py",
+        "scripts/setup_dev.ps1",
+        "scripts/verify_environment.py",
+        "src/api/bundle.py",
+        "src/api/main.py",
+        "src/data/prepare_sample.py",
+        "src/models/check_quality.py",
+        "src/models/export_serving_bundle.py",
+        "src/models/provenance.py",
+        "src/models/register_checked_model.py",
+        "src/models/release_integrity.py",
+        "src/models/train_cold_start.py",
+        "tests/test_api.py",
+        "tests/test_data_pipeline.py",
+        "tests/test_quality.py",
+        "tests/test_registration.py",
+        "tests/test_release_lineage.py"
+      ]
     }
   }
 }
