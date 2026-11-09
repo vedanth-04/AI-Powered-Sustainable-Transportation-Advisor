@@ -13,7 +13,7 @@
     }
   },
   "historical_evidence_sha256": {
-    "docs/results/phase2-v1/quality_report.json": "1c7cc4db6fca91b78ffa7f236359d2e8bf570d99877892867699e76fd2d770d1",
-    "docs/results/phase2-v1/registration.json": "3d37beefd8106a6d202d29b3c293a0d81dc148aaaed4f6683953a8f67c73da79"
+    "docs/results/phase2-v1/quality_report.json": "f08fb3ae546ff4c7593c94d3b0e0f9a74ccc535d3d42a5ec128eb720dc24601f",
+    "docs/results/phase2-v1/registration.json": "2a40cf6713a2e27f35d9f8d9bf21c011d2c0cabd4c1e66d24c265d5c71bbe1a7"
   }
 }

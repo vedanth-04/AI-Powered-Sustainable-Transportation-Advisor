@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 APPROVALS = ROOT / 'deploy/release-approvals'
@@ -128,7 +129,9 @@ def verify_bundle(directory: Path, record: dict) -> None:
     else:
         for name, digest in record['historical_evidence_sha256'].items():
             path = (ROOT / name).resolve()
-            if not path.is_relative_to(ROOT) or sha256(path.read_bytes()).hexdigest() != digest:
+            # Git's JSON text is LF; Windows checkouts may use CRLF. Model and
+            # manifest pins above remain exact byte hashes without normalization.
+            if not path.is_relative_to(ROOT) or sha256(path.read_bytes().replace(b'\r\n', b'\n')).hexdigest() != digest:
                 raise ValueError('Frozen historical v1 evidence changed.')
     load_bundle(directory, expected_manifest_sha256=record['files']['manifest.json']['sha256'])
     from scripts.reproduce_model_workflow import check_exported_api
@@ -137,9 +140,46 @@ def verify_bundle(directory: Path, record: dict) -> None:
         raise ValueError('Approved bundle does not reproduce the recorded smoke prediction.')
 
 
+def verify_registry(directory: Path, tracking_uri: str, registry_uri: str, *, client_factory=None) -> None:
+    """Future releases must freshly check shared-registry approval, never ambient defaults."""
+    for uri in (tracking_uri, registry_uri):
+        parsed = urlsplit(uri)
+        if parsed.scheme != 'https' or not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment:
+            raise ValueError('Explicit HTTPS tracking/registry endpoints without embedded credentials are required.')
+    if os.environ.get('MLFLOW_TRACKING_INSECURE_TLS', '').lower() in ('true', '1'):
+        raise ValueError('Insecure MLflow TLS is not allowed for release verification.')
+    manifest = json.loads((directory / 'manifest.json').read_bytes())
+    provenance = manifest['provenance']
+    if provenance['release_eligible'] is not True:
+        raise ValueError('Research bundles cannot reach the release registry gate.')
+    if client_factory is None:
+        from mlflow import MlflowClient
+        client_factory = MlflowClient
+    try:
+        client = client_factory(tracking_uri=tracking_uri, registry_uri=registry_uri)
+        registered = client.get_model_version(manifest['model_name'], str(manifest['model_version']))
+        tags = {'quality_gate':'passed_historical_demo', 'joblib_sha256':manifest['model_sha256'],
+                **{key:provenance[key] for key in ('quality_report_sha256','run_report_sha256','dependency_lock_sha256')},
+                'demo_route':manifest['route_id'],'demo_segment':manifest['segment_id']}
+        run = client.get_run(provenance['training_run_id'])
+        if (registered.name != manifest['model_name'] or str(registered.version) != str(manifest['model_version'])
+                or registered.status != 'READY' or registered.run_id != provenance['training_run_id']
+                or any(registered.tags.get(key) != value for key,value in tags.items())
+                or run.info.status != 'FINISHED' or run.info.lifecycle_stage != 'active'
+                or run.data.params.get('history_policy') != manifest['history_policy']
+                or run.data.params.get('traversals_sha256') != provenance['data']['input_sha256']):
+            raise ValueError('Registry approval revoked or mismatched.')
+        artifact = Path(client.download_artifacts(provenance['training_run_id'], 'tree_candidate.joblib'))
+        if sha256(artifact.read_bytes()).hexdigest() != manifest['model_sha256']:
+            raise ValueError('Registry artifact mismatch.')
+    except Exception:
+        # Registry exceptions can include URLs/authentication details. Keep logs sanitized.
+        raise ValueError('Shared registry verification failed; publication is blocked. Check runner access and approval.') from None
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=('authorize', 'verify', 'producer'))
+    parser.add_argument('command', choices=('authorize', 'verify', 'producer', 'registry'))
     parser.add_argument('--model-version', required=True)
     parser.add_argument('--bundle-dir', type=Path, default=ROOT / 'outputs/phase2_serving')
     parser.add_argument('--producer-json', type=Path)
@@ -156,6 +196,10 @@ def main() -> None:
                 print(f'{name}={value}', file=stream)
     elif args.command == 'producer':
         verify_handoff_run(record, json.loads(args.producer_json.read_bytes()), main_sha)
+    elif args.command == 'registry':
+        if version == 1:
+            raise ValueError('Frozen v1 uses its pinned historical exception, not fabricated shared-registry access.')
+        verify_registry(args.bundle_dir, os.environ.get('PHASE2_MLFLOW_TRACKING_URI',''), os.environ.get('PHASE2_MLFLOW_REGISTRY_URI',''))
     else:
         verify_bundle(args.bundle_dir, record)
 

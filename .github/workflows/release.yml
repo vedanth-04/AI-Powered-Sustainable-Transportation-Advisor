@@ -98,6 +98,17 @@ jobs:
           MODEL_VERSION: ${{ steps.policy.outputs.version }}
         run: python -m scripts.release_policy verify --model-version "$MODEL_VERSION"
 
+      - name: Recheck shared registry approval for new versions
+        if: steps.policy.outputs.version != '1'
+        env:
+          MODEL_VERSION: ${{ steps.policy.outputs.version }}
+          PHASE2_MLFLOW_TRACKING_URI: ${{ secrets.PHASE2_MLFLOW_TRACKING_URI }}
+          PHASE2_MLFLOW_REGISTRY_URI: ${{ secrets.PHASE2_MLFLOW_REGISTRY_URI }}
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+          MLFLOW_TRACKING_TOKEN: ${{ secrets.MLFLOW_TRACKING_TOKEN }}
+        run: python -m scripts.release_policy registry --model-version "$MODEL_VERSION"
+
       - name: Build the approved model image
         env:
           MODEL_VERSION: ${{ steps.policy.outputs.version }}

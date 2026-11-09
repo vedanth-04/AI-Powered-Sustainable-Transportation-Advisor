@@ -549,5 +549,133 @@
         "tests/test_release_lineage.py"
       ]
     }
+  },
+  "independent_reliability_followup": {
+    "baseline": "52dfba2f9b550dd0b87b60dda66143a3fd52a354",
+    "checked_at_utc": "2026-11-09T16:01:17.861937+00:00",
+    "api": {
+      "targeted_passed": 34,
+      "changes": [
+        "controlled 503 on prediction exceptions/invalid outputs",
+        "executed OpenAPI Route 90 example",
+        "bounded request IDs, model identity, latency/status/scope/error and readiness JSON logs",
+        "omit body/header/query/exception text; disable raw Uvicorn access log in new image"
+      ]
+    },
+    "release": {
+      "initial_targeted": {
+        "passed": 21,
+        "failed": 1,
+        "fix": "Malformed repository metadata now rejected safely"
+      },
+      "targeted_after_fix_passed": 23,
+      "shared_registry_tests": "mock clients only; pass, revoked, mismatched version/hash, connection failure and invalid HTTPS endpoints",
+      "manual_workflow": "current-main revision, approved model_version, successful exact-main CI, trusted per-version file approval, verified artifact producer and evidence, fresh shared-registry gate for new versions, version+SHA tags and digest smoke",
+      "frozen_v1_actual_check": "PASS on actual copied approved bytes and executable prediction",
+      "legacy_secret_transport": "Windows environment-variable size limitation observed; transport reader exercised with in-memory mapping only. No GitHub secret upload/login/release.",
+      "portability_fix": "Historical JSON anchors canonicalize CRLF to LF; model and manifest remain exact byte hashes",
+      "actual_dispatch_or_publication": false,
+      "live_shared_registry": "Not contacted; still unavailable"
+    },
+    "recovery": {
+      "targeted_passed": 15,
+      "unit_cases": 13,
+      "actual_compose_cases": 2,
+      "cases": [
+        "wrong prediction expectation",
+        "occupied candidate port"
+      ],
+      "isolation": "unique temporary Compose projects, allocated loopback ports, existing cached approved digest; pull preflight replaced by cache inspection",
+      "result": "previous state unchanged and configuration reactivated/smoked; projects removed",
+      "cross_version_rollback": "Unverified; same approved digest used"
+    },
+    "source_image": {
+      "passed": true,
+      "kind": "local source build with actual approved v1; no publication",
+      "image_id": "sha256:03a592f1791254e9006f306dca65bab8b8f4397d177e2e7ead287bf1e6577196",
+      "temporary_container": "c6e950c125fd2dd5c53d378fdf7c3caf7ff04c7775274a43b742a57a2adadc37",
+      "port": 53052,
+      "health": "healthy",
+      "prediction": {
+        "duration_minutes": 6.320402254818158,
+        "model_version": 1,
+        "estimate_source": "model",
+        "history_policy": "cold_start_v1"
+      },
+      "swagger_example": "executed over HTTP",
+      "structured_logs": "verified; sentinel omitted",
+      "original_container_unchanged": true
+    },
+    "full_suite": {
+      "tests": 165,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 2,
+      "passed": 163,
+      "warnings": 75,
+      "seconds": 192.61,
+      "skip_scope": "Two opt-in Compose tests executed separately and passed"
+    },
+    "earlier_full_pass": {
+      "passed": 154,
+      "skipped": 2,
+      "warnings": 75,
+      "seconds": 201.52
+    },
+    "dependencies": "pip check and exact isolated environment verification PASS; no dependency pins/global environments changed",
+    "workflow_syntax": {
+      "bash_blocks_checked": 12,
+      "yaml_and_source_parse": "PASS",
+      "live_release_workflow": "Not executed"
+    },
+    "failures_and_fixes": [
+      "Release metadata wrong-type regression fixed",
+      "Windows secret-value length limit: in-memory transport test, no real auth",
+      "Docker build missing credential helper on PATH: temporary documented Docker bin PATH fixed build",
+      "Historical JSON newline hashes corrected for Windows/Linux"
+    ],
+    "preserved": "Original healthy container 8f15e0445904ab3822c20439f076f03ec7acfddb16cfab245573d08ce2a99e3c, port 8001, approved image/model/state; live verifier 8/8 PASS. New API behaviors tested separately, not promoted to existing service.",
+    "local_evidence": "outputs/local_setup/reliability-20261109",
+    "pre_supplement_ci": {
+      "commit": "010823fe66e3f11681cd7493b17fc08502f7b14f",
+      "run_id": 42647756843,
+      "windows": "success",
+      "linux": "success"
+    },
+    "commits_pushed_so_far": [
+      "64c8d0a",
+      "f74037b",
+      "010823f"
+    ],
+    "remaining": [
+      "original/shared MLflow access and genuine handoff validation",
+      "multi-day inputs/lineage and real new-model approval",
+      "compatible new-model serving runtime",
+      "assigned VM/HTTPS/protected deployment",
+      "different-model-version rollback and reboot durability"
+    ],
+    "requirement_counts": {
+      "V": 35,
+      "I": 1,
+      "P": 17,
+      "M": 2,
+      "B": 3
+    },
+    "changed_files": [
+      ".github/workflows/release.yml",
+      "Dockerfile",
+      "README.md",
+      "deploy/release-approvals/v1.json",
+      "docs/phase2_demo.md",
+      "docs/phase2_submission_checklist.md",
+      "docs/results/2026-11-09-validation/summary.json",
+      "docs/summaries/pipeline_overview.md",
+      "scripts/release_policy.py",
+      "src/api/main.py",
+      "tests/test_api.py",
+      "tests/test_deploy.py",
+      "tests/test_deploy_integration.py",
+      "tests/test_release_policy.py"
+    ]
   }
 }

@@ -32,7 +32,12 @@ def test_main_and_legacy_tag_authorization(monkeypatch):
 
 
 def test_only_real_frozen_approval_is_shipped():
-    assert policy.approval(1)['kind'] == 'frozen_v1'
+    record = policy.approval(1)
+    assert record['kind'] == 'frozen_v1'
+    for name, digest in record['historical_evidence_sha256'].items():
+        data = (policy.ROOT / name).read_bytes().replace(b'\r\n',b'\n')
+        assert sha256(data).hexdigest() == digest
+        assert sha256(data.replace(b'\n',b'\r\n').replace(b'\r\n',b'\n')).hexdigest() == digest
     with pytest.raises(ValueError, match='No checked-in approval'):
         policy.approval(2)
 
@@ -79,6 +84,11 @@ def test_workflow_authorizes_and_verifies_before_publish():
     assert commands.index('release_policy authorize') < commands.index('release_bundle stage')
     assert commands.index('release_policy producer') < commands.index('gh run download')
     assert commands.index('release_policy verify') < commands.index('docker build') < commands.index('docker push')
+    assert commands.index('release_policy verify') < commands.index('release_policy registry') < commands.index('docker build')
+    registry_step = next(step for step in steps if 'release_policy registry' in step.get('run',''))
+    assert registry_step['if'] == "steps.policy.outputs.version != '1'"
+    assert 'MLFLOW_TRACKING_TOKEN' in registry_step['env']
+    assert 'MLFLOW_TRACKING_TOKEN' not in workflow['jobs']['build-and-publish'].get('env',{})
     assert 'sha-$GITHUB_SHA-v$MODEL_VERSION' in commands
     ci = yaml.safe_load((policy.ROOT / '.github/workflows/ci.yml').read_text())
     assert all(job.get('permissions', {}).get('packages') != 'write' for job in ci['jobs'].values())
@@ -132,3 +142,39 @@ def test_mock_v2_handoff_and_research_tampering(model_bundle):
     manifest['provenance']['quality_report_sha256'] = '0'*64
     with pytest.raises(ValueError, match='hashes'):
         policy.verify_bundle(directory, receipt())
+
+
+@pytest.mark.parametrize('failure', [None, 'revoked', 'artifact', 'connection', 'version'])
+def test_shared_registry_gate_with_mock_responses(tmp_path, failure):
+    from types import SimpleNamespace as NS
+    model = tmp_path / 'remote.joblib'
+    model.write_bytes(b'opaque fixture bytes, never deserialized')
+    digest = sha256(model.read_bytes()).hexdigest()
+    provenance = {'release_eligible':True,'training_run_id':'a'*32,'data':{'input_sha256':'b'*64},
+                  **{key:'c'*64 for key in ('quality_report_sha256','run_report_sha256','dependency_lock_sha256')}}
+    manifest = {'model_name':'BusTravelTimePredictor','model_version':2,'model_sha256':digest,
+                'history_policy':'cold_start_v1','route_id':'90','segment_id':'demo','provenance':provenance}
+    (tmp_path/'manifest.json').write_text(json.dumps(manifest))
+    tags = {'quality_gate':'passed_historical_demo','joblib_sha256':digest,
+            **{key:provenance[key] for key in ('quality_report_sha256','run_report_sha256','dependency_lock_sha256')},
+            'demo_route':'90','demo_segment':'demo'}
+    if failure == 'revoked':tags['quality_gate']='revoked'
+    if failure == 'artifact':model.write_bytes(b'corrupt remote bytes')
+    def factory(**kwargs):
+        assert kwargs=={'tracking_uri':'https://tracking.example.test','registry_uri':'https://registry.example.test'}
+        if failure == 'connection':raise RuntimeError('credential=never-expose-this')
+        return NS(get_model_version=lambda *a:NS(name='BusTravelTimePredictor',version='3' if failure=='version' else '2',status='READY',run_id='a'*32,tags=tags),
+                  get_run=lambda *a:NS(info=NS(status='FINISHED',lifecycle_stage='active'),data=NS(params={'history_policy':'cold_start_v1','traversals_sha256':'b'*64})),
+                  download_artifacts=lambda *a:str(model))
+    if failure:
+        with pytest.raises(ValueError, match='publication is blocked') as error:
+            policy.verify_registry(tmp_path,'https://tracking.example.test','https://registry.example.test',client_factory=factory)
+        assert 'never-expose-this' not in str(error.value)
+    else:
+        policy.verify_registry(tmp_path,'https://tracking.example.test','https://registry.example.test',client_factory=factory)
+
+
+@pytest.mark.parametrize('uri',['', 'http://registry.test','https://user:password@registry.test','https://registry.test?token=hidden'])
+def test_shared_registry_requires_explicit_safe_endpoints(tmp_path, uri):
+    with pytest.raises(ValueError,match='HTTPS'):
+        policy.verify_registry(tmp_path,uri,uri)
