@@ -1,0 +1,30 @@
+# Only the available one-day input is represented. No fabricated multi-day training stage.
+stages:
+  sample_labels:
+    cmd: python -B -m src.data.prepare_sample labels
+    deps:
+      - data/raw/2019-07-01.db
+      - requirements-dev.lock.txt
+      - src/config.py
+      - src/data/loader.py
+      - src/data/cleaner.py
+      - src/features/segment_config.py
+      - src/features/label_generation.py
+      - src/features/build_labels.py
+      - src/features/build_features.py
+      - src/data/prepare_sample.py
+    outs:
+      - data/processed/sample_cold_start/traversals.csv
+      - data/processed/sample_cold_start/labels.lineage.json
+  sample_features:
+    cmd: python -B -m src.data.prepare_sample features
+    deps:
+      - data/processed/sample_cold_start/traversals.csv
+      - data/processed/sample_cold_start/labels.lineage.json
+      - requirements-dev.lock.txt
+      - src/config.py
+      - src/features/build_features.py
+      - src/data/prepare_sample.py
+    outs:
+      - data/processed/sample_cold_start/features.csv
+      - data/processed/sample_cold_start/features.lineage.json

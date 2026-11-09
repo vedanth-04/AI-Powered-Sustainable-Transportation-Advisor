@@ -1,0 +1,90 @@
+schema: '2.0'
+stages:
+  sample_labels:
+    cmd: python -B -m src.data.prepare_sample labels
+    deps:
+    - path: data/raw/2019-07-01.db
+      hash: md5
+      md5: e3c31e6255359b7a4ebf93b3154659b2
+      size: 193421312
+    - path: requirements-dev.lock.txt
+      hash: md5
+      md5: 7fac218a38272737a6d6c06fcf6df1ba
+      size: 3190
+    - path: src/config.py
+      hash: md5
+      md5: 72846541ab20da9366d758b9736bcd0a
+      size: 1471
+    - path: src/data/cleaner.py
+      hash: md5
+      md5: 27cd373ede661aa185800e97b40ad5ec
+      size: 6124
+    - path: src/data/loader.py
+      hash: md5
+      md5: 0aaf5355161e689679787f291f21cf02
+      size: 2528
+    - path: src/data/prepare_sample.py
+      hash: md5
+      md5: 66151fa455cc6168c79178c35afe8a0c
+      size: 4387
+    - path: src/features/build_features.py
+      hash: md5
+      md5: 936e2c32ac7e49923ce6fb56f0ae3c03
+      size: 7470
+    - path: src/features/build_labels.py
+      hash: md5
+      md5: 827a23e2fd486203be2af4c4226c54b8
+      size: 5313
+    - path: src/features/label_generation.py
+      hash: md5
+      md5: 39f80bdb0245cfb18242e139378a666b
+      size: 8698
+    - path: src/features/segment_config.py
+      hash: md5
+      md5: c19be7031256d83b12cd077870bb6478
+      size: 9733
+    outs:
+    - path: data/processed/sample_cold_start/labels.lineage.json
+      hash: md5
+      md5: db95951f03694141f77130d61fbc16f5
+      size: 1529
+    - path: data/processed/sample_cold_start/traversals.csv
+      hash: md5
+      md5: e1b026fb0959bd00eb1378f09153f94a
+      size: 32330
+  sample_features:
+    cmd: python -B -m src.data.prepare_sample features
+    deps:
+    - path: data/processed/sample_cold_start/labels.lineage.json
+      hash: md5
+      md5: db95951f03694141f77130d61fbc16f5
+      size: 1529
+    - path: data/processed/sample_cold_start/traversals.csv
+      hash: md5
+      md5: e1b026fb0959bd00eb1378f09153f94a
+      size: 32330
+    - path: requirements-dev.lock.txt
+      hash: md5
+      md5: 7fac218a38272737a6d6c06fcf6df1ba
+      size: 3190
+    - path: src/config.py
+      hash: md5
+      md5: 72846541ab20da9366d758b9736bcd0a
+      size: 1471
+    - path: src/data/prepare_sample.py
+      hash: md5
+      md5: 66151fa455cc6168c79178c35afe8a0c
+      size: 4387
+    - path: src/features/build_features.py
+      hash: md5
+      md5: 936e2c32ac7e49923ce6fb56f0ae3c03
+      size: 7470
+    outs:
+    - path: data/processed/sample_cold_start/features.csv
+      hash: md5
+      md5: 57244a8dd76f2ec721155a59530e9bad
+      size: 46950
+    - path: data/processed/sample_cold_start/features.lineage.json
+      hash: md5
+      md5: a54aaa96c71613bf27c20a3fe9e73b76
+      size: 2027

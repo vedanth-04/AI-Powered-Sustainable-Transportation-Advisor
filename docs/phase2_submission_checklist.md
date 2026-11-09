@@ -83,6 +83,8 @@ Status key: **V** fully implemented and verified for the stated scope; **I** imp
 
 ## 3. Evidence to show faculty
 
+**Subsequent implementation — Batch B:** automatic raw-pointer discovery is repaired and regression-tested; `dvc.yaml`/`dvc.lock` now reproduce actual daily-sample labels and cold-start features with raw/source/environment lineage. The real run produced 152 rows; repeat execution skipped both stages and DVC status was up to date. Full suite: **82 passed, 23 warnings**. Existing raw pointer/hash and historical data are preserved; no data/credentials uploaded. Multi-day training lineage remains blocked. See the reproduction guide and appended implementation results in the validation JSON.
+
 - [Project chronology](summaries/pipeline_overview.md): actual Git dates/authors and planned versus implemented scope.
 - [Corrected Phase 1 benchmark](results/2026-10-16-corrected/README.md): 12 inputs and leakage correction; use its CSV instead of old slide scores.
 - [Historical Phase 2 quality](results/phase2-v1/quality_report.json) and [registry](results/phase2-v1/registration.json): original model approval, not this laptop's new training run.

@@ -1,5 +1,7 @@
 # Phase 2 demonstration and teammate deployment guide
 
+For the new daily-sample pipeline, show `python -m dvc dag`, `python -m dvc status` and `data/processed/sample_cold_start/features.lineage.json` in the clean environment. Batch B generated 152 real sample rows, repeated without processing, and passed 82 tests. Keep this one-day preparation separate from the historical 637-row model approval.
+
 For source/test demonstrations use the new clean setup: `powershell -File scripts/setup_dev.ps1 -RunTests`. Batch A on November 9 passed pip check, exact development pins and 80 tests (23 warnings) in a fresh environment. This supersedes the earlier mixed-environment limitation for development tests; it does not recreate the original real-data registry. Keep the published v1 demonstration below separate.
 
 This guide covers the released `BusTravelTimePredictor` version 1: model tests, quality checks, the MLflow registry, FastAPI inference, Docker packaging, GitHub Actions, and deployment on a Windows PC using Docker Desktop with WSL 2. Run the PowerShell commands from the repository root.

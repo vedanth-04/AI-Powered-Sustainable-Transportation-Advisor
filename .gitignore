@@ -69,19 +69,21 @@ outputs/*
 
 # Large Datasets & Storage Safeguards
 # Keep directory structure via README / .gitkeep, but ignore all raw/interim/processed data files.
-data/raw/*
+# Require a nonempty basename: Dulwich treats '*' as matching the parent slash.
+# '?*' preserves ignored children while keeping the parent discoverable by DVC.
+data/raw/?*
 !data/raw/README.md
 !data/raw/.gitkeep
 !data/raw/*.dvc
 !data/raw/.gitignore
 
-data/interim/*
+data/interim/?*
 !data/interim/README.md
 !data/interim/.gitkeep
 !data/interim/*.dvc
 !data/interim/.gitignore
 
-data/processed/*
+data/processed/?*
 !data/processed/README.md
 !data/processed/.gitkeep
 !data/processed/*.dvc

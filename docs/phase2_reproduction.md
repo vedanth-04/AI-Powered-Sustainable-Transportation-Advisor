@@ -4,6 +4,25 @@ The deployed image demonstrates the approved historical Route 90 model. The comm
 
 ## Prerequisites
 
+### Available daily-sample DVC pipeline
+
+With the clean environment installed and `data/raw/2019-07-01.db` restored using your existing private DVC credentials:
+
+```powershell
+# Prepend the new interpreter so DVC stage commands use the same environment.
+$env:PATH = (Join-Path $PWD '.venv-dev/Scripts') + ';' + $env:PATH
+python -m dvc status
+python -m dvc dag
+python -m dvc repro
+python -m dvc status
+```
+
+`dvc.yaml` runs real existing corridor cleaning/label extraction, then `cold_start_v1` feature engineering. New DVC-managed outputs live only under `data/processed/sample_cold_start/`; existing corrected/historical outputs are preserved. The raw database is checked against its unchanged MD5/size pointer before processing. Deterministic CSVs and JSON record raw SHA-256/DVC identity, exact pointer and source hashes, lock hash, row count, feature schema and output hashes. No timestamps or personal absolute paths enter this metadata. `dvc.lock` records the dependency/output DAG; only small configuration and lock metadata are committed. No data was uploaded to the remote.
+
+The discovery bug came from Dulwich interpreting `data/raw/*` as matching the directory's trailing slash and pruning it before finding `.dvc` files. Requiring a nonempty basename (`?*`) preserves data ignores and pointer discovery; a temporary Git/DVC regression test verifies both. An initial directory-negation attempt failed that test and was replaced. DVC also rejects `.dvc` pointer files as explicit stage dependencies: the stage depends on the actual database, with pointer verification in the preparation code.
+
+The real July 1 run produced 152 traversals and feature rows. A repeated `dvc repro` skipped both stages and status was up to date. This is the one-day preparation pipeline, **not** the missing 637-row multi-day input or approved training reproduction. No training stage is invented for unavailable inputs. Raw hashes and the original pointer are unchanged; obtaining the original multi-day datasets and verifiable processing lineage is still required. Cross-platform byte hashes may change with Git newline settings and numerical runtime; retain the recorded environment and validate outputs rather than assuming identical bytes.
+
 ### Clean development/test environment (November 9 implementation)
 
 Use CPython 3.12 and a new environment; keep the original `.venv` and approved Linux serving image. From the repository root:

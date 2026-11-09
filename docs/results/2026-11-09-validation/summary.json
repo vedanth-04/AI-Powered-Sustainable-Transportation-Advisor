@@ -369,6 +369,34 @@
       ],
       "linux_lock_execution": "pending CI",
       "original_environments_and_serving_lock": "unchanged"
+    },
+    "B": {
+      "discovery": [
+        "sample_labels",
+        "sample_features",
+        "data\\raw\\2019-07-01.db.dvc"
+      ],
+      "root_cause": "Dulwich wildcard matched parent trailing slash; nonempty basename pattern fixes pruning",
+      "pipeline": "sample_labels -> sample_features, genuine July 1 preparation",
+      "rows": 152,
+      "repeat_repro": "Both stages skipped; data and pipelines up to date",
+      "raw_pointer_sha256": "781e28108356cdd7c47dd561f242ef7b94e33dbbd2cc5284ae730405851d3942",
+      "raw_md5": "e3c31e6255359b7a4ebf93b3154659b2",
+      "pytest": {
+        "passed": 82,
+        "warnings": 23,
+        "seconds": 47.85
+      },
+      "initial_regression": "1 failed, 1 passed; directory exception did not solve Dulwich behavior; corrected and 2 passed",
+      "data_uploaded": false,
+      "approved_training": "Not rerun; 637-row multi-day input absent",
+      "commands": [
+        "<new-python> -m dvc repro (actual pipeline)",
+        "<new-python> -m dvc repro (repeat, skipped)",
+        "<new-python> -m dvc status",
+        "<new-python> -m dvc dag",
+        "<new-python> -B -m pytest tests -q (pytest-b-all.xml)"
+      ]
     }
   }
 }
