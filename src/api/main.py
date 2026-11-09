@@ -70,6 +70,11 @@ def require_model(request: Request) -> ServingBundle:
 def create_app(bundle_dir: Path | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(application: FastAPI):
+        if not logger.handlers:
+            handler = logging.StreamHandler()
+            handler.setFormatter(logging.Formatter('%(message)s'))
+            logger.addHandler(handler)
+        logger.setLevel(logging.INFO)
         path = bundle_dir or Path(os.environ.get("BUS_MODEL_BUNDLE_DIR", str(DEFAULT_BUNDLE_DIR)))
         try:
             application.state.bundle = load_bundle(path, expected_manifest_sha256=os.environ.get('BUS_MODEL_MANIFEST_SHA256'))

@@ -1,0 +1,19 @@
+{
+  "model_version": 1,
+  "kind": "frozen_v1",
+  "expected_minutes": 6.320402254818158,
+  "files": {
+    "manifest.json": {
+      "size": 593,
+      "sha256": "4e5e853c3849ad55cc69d7134753e3b72bb52f72bc05963f60c5e122c4585029"
+    },
+    "model.joblib": {
+      "size": 247067,
+      "sha256": "b26d1a45f8e97278b8be70eef9c6c88e39b7d52537d55bea6a206b3391934a88"
+    }
+  },
+  "historical_evidence_sha256": {
+    "docs/results/phase2-v1/quality_report.json": "1c7cc4db6fca91b78ffa7f236359d2e8bf570d99877892867699e76fd2d770d1",
+    "docs/results/phase2-v1/registration.json": "3d37beefd8106a6d202d29b3c293a0d81dc148aaaed4f6683953a8f67c73da79"
+  }
+}
