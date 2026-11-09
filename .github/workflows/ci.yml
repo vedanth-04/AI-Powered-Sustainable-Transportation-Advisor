@@ -14,7 +14,11 @@ permissions:
 jobs:
   test-and-container:
     name: Pytest and Docker smoke test
-    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     env:
       MPLBACKEND: Agg
@@ -32,6 +36,7 @@ jobs:
           cache: pip
           cache-dependency-path: |
             requirements-ci.txt
+            requirements-dev.lock.txt
             requirements-serve.lock.txt
 
       - name: Install test dependencies
@@ -39,14 +44,20 @@ jobs:
           python -m pip install -r requirements-ci.txt
           python -m pip check
 
+      - name: Verify the complete test environment lock
+        run: python -m scripts.verify_environment
+
       - name: Run Pytest
         run: python -m pytest tests -q
 
       - name: Generate the synthetic CI bundle
+        if: runner.os == 'Linux'
         run: python -m scripts.prepare_ci_bundle
 
       - name: Build the serving image
+        if: runner.os == 'Linux'
         run: docker build --tag bus-travel-time:ci .
 
       - name: Check readiness and prediction over HTTP
+        if: runner.os == 'Linux'
         run: bash scripts/smoke_container.sh bus-travel-time:ci 1 6.25

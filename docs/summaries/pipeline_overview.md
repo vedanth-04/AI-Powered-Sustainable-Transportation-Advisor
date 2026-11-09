@@ -48,6 +48,8 @@ The November 6 record's UTC evaluation time precedes the source commit's author 
 
 ## Documentation map and preservation decisions
 
+November 9, subsequent implementation Batch A: replaced open-ended development requirements with a complete CPython 3.12 test lock, separate from serving; added a non-overwriting PowerShell setup helper, installed-pin verification and Windows/Linux CI. A fresh local environment passed pip check and all 80 tests (23 warnings), without borrowing from or changing the original `.venv`. Earlier audit failures remain recorded.
+
 - Detailed EDA/label/feature reports explain methodology; summaries provide short faculty explanations, not competing result tables.
 - `docs/reference/` retains the original scaffold, stage plans, schema audit, fleet audit and DVC setup. Its [index](../reference/README.md) labels historical context.
 - `docs/model_benchmarking_report.md` deliberately retains superseded pre-correction results. Current Phase 1 metrics live in `docs/results/2026-10-16-corrected/`; Phase 2 v1 approval is in `docs/results/phase2-v1/`.

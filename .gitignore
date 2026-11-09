@@ -4,6 +4,7 @@
 
 # Virtual Environments
 .venv/
+.venv-dev/
 env/
 venv/
 ENV/

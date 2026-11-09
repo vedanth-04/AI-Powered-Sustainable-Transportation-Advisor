@@ -68,7 +68,7 @@ SQLite + DVC -> cleaning -> gate-crossing labels -> 12 shared features
 
 Code is in `src/data`, `src/features`, `src/models` and `src/api`; orchestration is in `scripts`, tests in `tests`, workflows in `.github/workflows`, and deployment configuration in `deploy`. `docs/results` holds small historical and validation records; `outputs` holds ignored generated evidence. The original two notebooks remain under `notebooks`.
 
-For development, `requirements.txt` declares minimum versions. `requirements-ci.txt` includes the Linux serving lock plus test dependencies. The November 9 attempt to install that lock on Windows failed on unavailable `anyio==4.16.0`; the [audit](docs/phase2_submission_checklist.md) records the fallback test environment. Do not silently substitute dependency versions and claim release parity.
+For development on Windows with CPython 3.12, run `powershell -File scripts/setup_dev.ps1 -RunTests`. This creates a new `.venv-dev`, installs the complete `requirements-dev.lock.txt`, checks dependencies and pins, and runs tests. It refuses to replace an existing environment. `requirements.txt` and `requirements-ci.txt` use this development lock; the approved Docker serving lock remains separate. See the [reproduction guide](docs/phase2_reproduction.md) for commands and evidence.
 
 The November 9 fixture suite passed 80 tests with 61 warnings after isolated MLflow/SQLAlchemy alignment. Its mixed test environment still fails dependency checks; the running Linux image independently passes its serving lock and dependency checks.
 

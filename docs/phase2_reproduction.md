@@ -4,6 +4,22 @@ The deployed image demonstrates the approved historical Route 90 model. The comm
 
 ## Prerequisites
 
+### Clean development/test environment (November 9 implementation)
+
+Use CPython 3.12 and a new environment; keep the original `.venv` and approved Linux serving image. From the repository root:
+
+```powershell
+powershell -File scripts/setup_dev.ps1 -RunTests
+# Subsequent commands use the new interpreter explicitly:
+.\.venv-dev\Scripts\python.exe -m pip check
+.\.venv-dev\Scripts\python.exe -B -m scripts.verify_environment --require-venv
+.\.venv-dev\Scripts\python.exe -B -m pytest tests -q
+```
+
+The setup helper refuses an existing destination; use `-EnvironmentPath .venv-dev-2` for another isolated installation. It records a transcript, package consistency, lock validation and optional JUnit results under ignored `outputs/local_setup/environment-<unique-id>`. No activation or global Python changes are required. `requirements-dev.in` records direct dependencies; `requirements-dev.lock.txt` pins the full resolved environment, including platform markers. Regenerate only in a fresh environment and validate with pip check and tests. Notebook tools are optional and excluded from this model/test environment; install them separately if needed. Windows and Linux CI use this same test lock; Docker retains `requirements-serve.lock.txt` unchanged.
+
+The earlier host/mixed environment fails because its MLflow/SQLAlchemy versions and pandas/pyarrow/cachetools/importlib-metadata/packaging constraints conflict, with greenlet missing in the borrowed test environment. The clean environment pins MLflow/skinny 3.1.4, SQLAlchemy 2.0.57 and compatible scientific libraries, resolving dependencies normally. Earlier audit failures below remain historical evidence. A development lock does not prove byte-for-byte reproduction of the unavailable historical training store.
+
 Use Python 3.12 with an explicitly recorded test environment. Do not assume an existing `.venv` matches the original release. For a fresh clone, create a Python 3.12 environment and install `requirements-ci.txt`; it includes the inference dependencies and the additional training/test tools. Run commands from the repository root. Docker is used for the already published API deployment; this model reproduction command runs in Python.
 
 Supply the processed traversal CSV locally. The demonstrated input is `data/processed/phase2_cold_start/traversals.csv`, with 637 traversals and SHA-256 `243f568e1abc9d29e2fe9f665df36302a2aff61851438871de7ea4643dd5267b`. The data file is ignored by Git. A fresh clone needs the corresponding processed data from the project's data workflow before it can reproduce training. The committed historical reports are evidence of the earlier evaluation, and do not replace the input dataset.

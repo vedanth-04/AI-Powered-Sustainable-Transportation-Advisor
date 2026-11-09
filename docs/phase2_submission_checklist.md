@@ -16,6 +16,8 @@ Historical counts remain separate: the November 6 approval snapshot records 29 t
 
 ## 2. Requirement-by-requirement audit
 
+**Subsequent implementation — Batch A:** a genuinely isolated CPython 3.12.5 environment now passes `pip check`, exact development-lock validation and **80 tests (23 warnings)**. No borrowed libraries or original-environment changes. See `requirements-dev.in`, `requirements-dev.lock.txt`, `scripts/setup_dev.ps1`, `scripts/verify_environment.py` and the new Windows/Linux CI matrix. The earlier failed attempts above remain historical; serving dependencies and approved Docker deployment are unchanged. Linux execution of the new lock remains pending CI.
+
 Status key: **V** fully implemented and verified for the stated scope; **I** implemented/inspected but not executed here; **P** partially implemented; **M** missing; **B** blocked by unavailable data, credentials or infrastructure. A fixture check verifies that fixture behavior, not the original model accuracy or a shared production registry. References below are repository-relative paths; raw logs remain local and the linked JSON provides sanitized results.
 
 | ID / PDF page | Requirement | Status | Evidence / exact limit |

@@ -1,5 +1,7 @@
 # Phase 2 demonstration and teammate deployment guide
 
+For source/test demonstrations use the new clean setup: `powershell -File scripts/setup_dev.ps1 -RunTests`. Batch A on November 9 passed pip check, exact development pins and 80 tests (23 warnings) in a fresh environment. This supersedes the earlier mixed-environment limitation for development tests; it does not recreate the original real-data registry. Keep the published v1 demonstration below separate.
+
 This guide covers the released `BusTravelTimePredictor` version 1: model tests, quality checks, the MLflow registry, FastAPI inference, Docker packaging, GitHub Actions, and deployment on a Windows PC using Docker Desktop with WSL 2. Run the PowerShell commands from the repository root.
 
 ## 1. What is deployed

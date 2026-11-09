@@ -347,5 +347,28 @@
     "git_diff_check": "PASS",
     "powershell_fenced_examples_parsed": 38,
     "powershell_syntax_errors": 0
+  },
+  "implementation_batches": {
+    "A": {
+      "environment": "Fresh CPython 3.12.5 venv, no borrowed packages",
+      "pip_check": "No broken requirements found.",
+      "lock_validation": "PASS, every active pin installed within isolated venv",
+      "pytest": {
+        "passed": 80,
+        "warnings": 23,
+        "seconds": 69.94
+      },
+      "local_evidence": "outputs/local_setup/implementation-20261109-140155",
+      "commands": [
+        "python -m venv outputs/local_setup/implementation-20261109-140155/venv",
+        "<new-python> -m pip install -r requirements-dev.in",
+        "<new-python> -m pip freeze (complete lock, platform markers added)",
+        "<new-python> -m pip check",
+        "<new-python> -B -m scripts.verify_environment --require-venv",
+        "<new-python> -B -m pytest tests -q --basetemp=<unique TEMP directory> --junitxml=<evidence>/pytest-a.xml -o cache_dir=<evidence>/pytest-cache"
+      ],
+      "linux_lock_execution": "pending CI",
+      "original_environments_and_serving_lock": "unchanged"
+    }
   }
 }
