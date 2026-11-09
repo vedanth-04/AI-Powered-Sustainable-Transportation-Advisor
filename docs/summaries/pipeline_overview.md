@@ -58,6 +58,8 @@ November 9, subsequent implementation Batch A: replaced open-ended development r
 
 ## Pending milestones
 
+November 9, Batch C: added approval schema/manifest v2 with source/data/lock/schema/run lineage, exact split row membership, registry approval hash tags and export/reload parity. Added losing-candidate, CLI failure, missing/incompatible/unauthorized artifact and DVC tampering tests: 104 passed in the full run plus 8 additional lineage tests. Verified the actual approved v1 copy with the updated loader and rechecked the unchanged healthy live deployment (8/8 + smoke). Linux CI passed; Windows Python installer availability was diagnosed and the platform pin corrected. No shared registry, real-data retraining, eligible v2 release or image publication is claimed.
+
 November 9, Batch B: diagnosed automatic DVC discovery as Dulwich's parent-directory wildcard matching; fixed ignores with a regression test. Added a real two-stage daily-sample DVC pipeline with deterministic CSV/lineage JSON, generated 152 rows and verified repeat execution is a no-op. Full suite: 82 passed, 23 warnings. No historical data/model or raw pointer changed, and no fabricated multi-day training stage was added.
 
 First close the Phase 2 guide gaps: four-segment approved coverage, shared registry/release lineage, complete manifest, explicit missing/losing fixture coverage, structured service logs and protected VM deployment. Then evaluate new independent/current traffic data and build timetable-to-segment mapping. Multimodal journey routing, fares, emissions ranking and the journey UI follow later. A localhost demo is not a public deployed service.

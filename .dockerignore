@@ -11,3 +11,4 @@
 !src/features/segment_config.py
 !outputs/phase2_serving/manifest.json
 !outputs/phase2_serving/model.joblib
+!outputs/phase2_serving/environment.lock.txt

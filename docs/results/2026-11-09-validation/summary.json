@@ -397,6 +397,44 @@
         "<new-python> -m dvc dag",
         "<new-python> -B -m pytest tests -q (pytest-b-all.xml)"
       ]
+    },
+    "C": {
+      "pytest_full": {
+        "passed": 104,
+        "warnings": 75,
+        "seconds": 388.71
+      },
+      "additional_lineage_tests": {
+        "passed": 8,
+        "seconds": 4.56
+      },
+      "approval_schema": 2,
+      "bundle_manifest": 2,
+      "legacy_v1_new_loader": "PASS on copied actual approved artifact; identical Route 90 prediction, readiness and unsupported-route 422",
+      "registered_export_parity": "PASS on every held-out row of isolated fixtures; negative parity/revocation/evidence tests passed",
+      "real_daily_data_identity": "PASS; DVC/raw/source/lock links verified without training",
+      "release_eligible_real_model_created": false,
+      "shared_registry": "Not available; local-only explicit endpoints and configuration restoration retained",
+      "ci_before_platform_fix": {
+        "run_id": 42634237305,
+        "linux": "success, including Docker smoke",
+        "windows": "failed before installation: Python 3.12.14 has no Windows installer in setup-python catalog",
+        "fix": "Windows 3.12.10, Linux 3.12.14; official catalog verified"
+      },
+      "commands": [
+        "<new-python> -B -m pytest tests -q (pytest-c-all.xml)",
+        "<new-python> -B -m pytest tests/test_release_lineage.py -q (pytest-c-lineage.xml)",
+        "<new-python> -B -m scripts.verify_deployment --state-file <original custom state> --output <new evidence>/deployment-preserved.json",
+        "<new-python> -B -m scripts.smoke_api --base-url http://127.0.0.1:8001 --expected-minutes 6.320402254818158 --model-version 1",
+        "docker cp <approved container>:/app/release <new ignored evidence>/approved-v1-readonly-copy",
+        "load_bundle and check_exported_api on that isolated copy; no deployment change"
+      ],
+      "post_review_source_coverage_tests": {
+        "passed": 10,
+        "warnings": 18,
+        "seconds": 48.36,
+        "note": "Expanded evaluated sources to include baseline/evaluation/API/environment verifier; quality + real fixture registration/export + lineage rechecked"
+      }
     }
   }
 }

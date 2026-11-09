@@ -47,7 +47,7 @@ def check_exported_api(bundle_dir: Path) -> dict:
     }
 
 
-def reproduce(traversals: Path, validation_start: date, test_start: date, output_dir: Path) -> dict:
+def reproduce(traversals: Path, validation_start: date, test_start: date, output_dir: Path, *, data_lineage: Path | None = None, allow_unversioned_data: bool = False) -> dict:
     if sys.version_info[:2] != (3, 12):
         raise ValueError("Run this workflow in the Python 3.12 release/test environment.")
     traversals = traversals.resolve(strict=True)
@@ -110,10 +110,12 @@ def reproduce(traversals: Path, validation_start: date, test_start: date, output
 
         stage("training", lambda: train_cold_start_models(
             traversals, validation_start, test_start, run_dir, tracking_db=tracking_db,
+            data_lineage=data_lineage,
         ))
         quality = stage("quality", lambda: check_model_quality(run_dir, junit))
         registration = stage("registration", lambda: register_checked_model(run_dir))
-        stage("export", lambda: export_serving_bundle(run_dir, bundle_dir))
+        manifest = stage("export", lambda: export_serving_bundle(run_dir, bundle_dir, allow_unversioned_data=allow_unversioned_data))
+        report['release_eligible'] = manifest.provenance.release_eligible
         report["api_check"] = stage("exported_api", lambda: check_exported_api(bundle_dir))
         report.update(
             status="passed", completed_at_utc=utc_now(),
@@ -136,6 +138,8 @@ def reproduce(traversals: Path, validation_start: date, test_start: date, output
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--traversals", type=Path, required=True)
+    parser.add_argument('--data-lineage', type=Path, help='Verified DVC lineage for this exact input.')
+    parser.add_argument('--allow-unversioned-data', action='store_true', help='Isolated research reproduction only; does not create an eligible release.')
     parser.add_argument("--validation-start", type=date.fromisoformat, default=date(2019, 7, 5))
     parser.add_argument("--test-start", type=date.fromisoformat, default=date(2019, 7, 8))
     parser.add_argument("--output-dir", type=Path, default=ROOT / "outputs" / (
@@ -143,7 +147,7 @@ def main() -> None:
     ))
     args = parser.parse_args()
     try:
-        report = reproduce(args.traversals, args.validation_start, args.test_start, args.output_dir)
+        report = reproduce(args.traversals, args.validation_start, args.test_start, args.output_dir, data_lineage=args.data_lineage, allow_unversioned_data=args.allow_unversioned_data)
     except KeyboardInterrupt:
         parser.exit(130, "Workflow interrupted. Partial evidence remains in the new output directory.\n")
     except Exception as exc:

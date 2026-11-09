@@ -55,8 +55,19 @@ def test_sqlite_registration_reloads_and_exports_approved_model(checked_run, tmp
     version = client.get_model_version(record["model_name"], 1)
     assert version.tags["quality_gate"] == "passed_historical_demo"
     assert version.tags["joblib_sha256"] == quality["candidate_joblib_sha256"]
-    manifest = export_serving_bundle(run_dir, tmp_path / "bundle")
+    with pytest.raises(ValueError, match='DVC lineage'):
+        export_serving_bundle(run_dir, tmp_path / 'strict-bundle')
+    assert not (tmp_path / 'strict-bundle').exists()
+    manifest = export_serving_bundle(run_dir, tmp_path / "bundle", allow_unversioned_data=True)
     assert manifest.model_sha256 == quality["candidate_joblib_sha256"]
+    assert manifest.manifest_version == 2
+    assert manifest.provenance.training_run_id == record['training_run_id']
+    assert manifest.provenance.data.kind == 'sha256_only'
+    assert manifest.provenance.release_eligible is False
+    from src.api.bundle import load_bundle
+    loaded = load_bundle(tmp_path / 'bundle')
+    assert loaded.manifest == manifest
+    assert export_serving_bundle(run_dir, tmp_path / 'bundle', allow_unversioned_data=True) == manifest
     with pytest.raises(FileExistsError):
         registration.register_checked_model(run_dir)
     assert len(client.search_model_versions(f"name='{record['model_name']}'")) == 1
@@ -103,3 +114,71 @@ def test_failed_registered_reload_is_not_marked_approved(checked_run, monkeypatc
     version = client.get_model_version("BusTravelTimePredictor", 1)
     assert version.tags["quality_gate"] == "failed_registration"
     assert "joblib_sha256" not in version.tags
+
+
+@pytest.mark.parametrize('change', ['missing-check', 'quality-bytes', 'run-report', 'pytest-report', 'candidate-bytes', 'revoked', 'wrong-run', 'registry-uri'])
+def test_export_rechecks_approval_and_registry(checked_run, tmp_path, monkeypatch, change):
+    from src.models import export_serving_bundle as exporter
+    run_dir, _, quality = checked_run
+    record = registration.register_checked_model(run_dir)
+    if change == 'missing-check':
+        quality['checks'].pop(next(iter(quality['checks'])))
+        (run_dir / 'quality_report.json').write_text(json.dumps(quality))
+    elif change == 'quality-bytes':
+        with (run_dir / 'quality_report.json').open('a') as stream:
+            stream.write('\n')
+    elif change == 'run-report':
+        with (run_dir / 'run_report.json').open('a') as stream:
+            stream.write('\n')
+    elif change == 'pytest-report':
+        (run_dir / 'pytest.xml').write_text('<testsuite/>')
+    elif change == 'candidate-bytes':
+        (run_dir / 'tree_candidate.joblib').write_bytes(b'not approved')
+    elif change == 'revoked':
+        client = MlflowClient(tracking_uri=record['tracking_uri'], registry_uri=record['registry_uri'])
+        client.set_model_version_tag(record['model_name'], record['version'], 'quality_gate', 'revoked')
+    else:
+        record['training_run_id' if change == 'wrong-run' else 'registry_uri'] = 'unapproved'
+        (run_dir / 'registration.json').write_text(json.dumps(record))
+    monkeypatch.setattr(exporter.joblib, 'load', lambda *args: pytest.fail('Unapproved export reached deserialization'))
+    with pytest.raises((ValueError, KeyError)):
+        exporter.export_serving_bundle(run_dir, tmp_path / 'rejected', allow_unversioned_data=True)
+    assert not (tmp_path / 'rejected').exists()
+
+
+def test_export_rechecks_registered_predictions(checked_run, tmp_path, monkeypatch):
+    from src.models import export_serving_bundle as exporter
+    run_dir, _, _ = checked_run
+    registration.register_checked_model(run_dir)
+    class WrongPredictions:
+        def predict(self, features):
+            return np.full(len(features), 999.)
+    before = mlflow.get_tracking_uri(), mlflow.get_registry_uri()
+    monkeypatch.setattr(exporter.mlflow.sklearn, 'load_model', lambda *args: WrongPredictions())
+    with pytest.raises(ValueError, match='held-out predictions'):
+        exporter.export_serving_bundle(run_dir, tmp_path / 'rejected', allow_unversioned_data=True)
+    assert before == (mlflow.get_tracking_uri(), mlflow.get_registry_uri())
+    assert not (tmp_path / 'rejected').exists()
+
+
+@pytest.mark.parametrize('change', ['runtime', 'lock', 'lineage', 'schema'])
+def test_v2_manifest_rejects_incompatible_metadata_before_loading(checked_run, tmp_path, monkeypatch, change):
+    from src.api import bundle
+    run_dir, _, _ = checked_run
+    registration.register_checked_model(run_dir)
+    dest = tmp_path / 'bundle'
+    export_serving_bundle(run_dir, dest, allow_unversioned_data=True)
+    path = dest / 'manifest.json'
+    manifest = json.loads(path.read_bytes())
+    if change == 'runtime':
+        manifest['provenance']['model_runtime']['numpy'] = '0.0.0'
+    elif change == 'schema':
+        manifest['provenance']['feature_schema_sha256'] = '0' * 64
+    elif change == 'lineage':
+        manifest['provenance']['data']['kind'] = 'dvc'  # Missing all required DVC fields.
+    else:
+        (dest / 'environment.lock.txt').write_text('changed lock')
+    path.write_text(json.dumps(manifest))
+    monkeypatch.setattr(bundle.joblib, 'load', lambda *args: pytest.fail('Invalid v2 reached joblib'))
+    with pytest.raises(ValueError):
+        bundle.load_bundle(dest)

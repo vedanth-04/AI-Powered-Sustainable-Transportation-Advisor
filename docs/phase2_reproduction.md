@@ -45,13 +45,28 @@ Supply the processed traversal CSV locally. The demonstrated input is `data/proc
 
 ## Run all stages
 
-Choose a new output directory for every attempt:
+### Current v2 release integrity rules
+
+New approvals use schema version 2. Registration and export recheck the complete gate, JUnit contents/hash, run report, evaluated source hashes, exact lock/runtime, input identity, split row membership and model bytes. Numbered registry versions must retain approval/report/lock/artifact tags; revoked or mismatched versions cannot export. Export compares every held-out prediction with the registered model and reloads the written bundle before success. Existing directories and the approved release are never overwritten.
+
+V2 manifests record model version/run, actual source Git HEAD and working-tree dirty state, evaluated file hashes, data identity, feature-schema/policy hash, dependency-lock hash, approval hashes and model runtime. The full development lock accompanies the bundle as `environment.lock.txt`; the API validates its hash and numerical dependencies before deserialization. Existing v1 manifests remain readable. `BUS_MODEL_MANIFEST_SHA256`, when supplied from a trusted deployment record, rejects a changed manifest before Joblib loading. Checksums alone do not authenticate arbitrary third-party pickle files; the deployment image digest/trusted manifest pin is the trust boundary.
+
+Default export requires verified DVC-backed input and a clean source snapshot. Pass the actual preparation metadata with `--data-lineage` to training or the reproduction helper. DVC identity is verified against the local raw bytes/pointer, processing sources and matching output in `dvc.lock`. This laptop's one-day sample has verified identity but cannot support the historical three-date training split. The multi-day input and its pipeline remain unavailable; no eligible real release was created.
+
+For a deliberately isolated historical/research experiment lacking full DVC lineage, explicitly use `--allow-unversioned-data` on the reproduction/export helper. Its manifest records the actual SHA-256-only identity and `release_eligible=false`; the option does not recreate provenance or authorize publishing. The historical example below uses this option. Original v1 evidence cannot simply be passed to the new exporter: it needs a fresh complete approval in a compatible environment, not edits to old records.
+
+Registry endpoints are explicitly recorded as both `tracking_uri` and `registry_uri` and must match the checked local SQLite store. Ambient `MLFLOW_*` endpoints are not accepted as silent replacements, and global client configuration is restored after checks. Shared MLflow execution remains blocked by unavailable infrastructure/artifacts. A future adapter must explicitly provision persistent tracking/registry URIs, authenticated artifact access, TLS and permissions, then run the same negative/parity tests; credentials belong in runner secrets/environment, never manifests or Git. No shared-registry equivalence is claimed.
+
+No v2 image was built or published. Its eventual serving lock must match the v2 manifest's numerical runtime and be tested separately; the existing `requirements-serve.lock.txt` and live v1 image remain frozen. The Docker context now permits the optional environment-lock file, while keeping all other outputs excluded.
+
+Choose a new output directory for every isolated research attempt (the required 637-row CSV is still absent here):
 
 ```powershell
-.\.venv\Scripts\python.exe -m scripts.reproduce_model_workflow `
+.\.venv-dev\Scripts\python.exe -m scripts.reproduce_model_workflow `
   --traversals data/processed/phase2_cold_start/traversals.csv `
   --validation-start 2019-07-05 `
   --test-start 2019-07-08 `
+  --allow-unversioned-data `
   --output-dir outputs/phase2_reproduction_demo
 ```
 
@@ -90,6 +105,7 @@ outputs/phase2_reproduction_demo/
   serving/
     manifest.json
     model.joblib
+    environment.lock.txt    V2 dependency-lock bytes, hash-validated by the loader
 ```
 
 All files above are generated locally under the ignored `outputs` directory. The report contains a local registry URI, so moving the entire run to another machine also requires handling MLflow's artifact paths. Teammates can reproduce their own local run from the same input data and environment.
@@ -101,11 +117,11 @@ A model version number belongs to its registry. Version 1 in this new store is a
 For an existing training run created by `src.models.train_cold_start`, supply the actual successful test report:
 
 ```powershell
-.\.venv\Scripts\python.exe -m src.models.check_quality `
+.\.venv-dev\Scripts\python.exe -m src.models.check_quality `
   --run-dir outputs/phase2_reproduction_demo/training `
   --pytest-xml outputs/phase2_reproduction_demo/pytest.xml
 
-.\.venv\Scripts\python.exe -m src.models.register_checked_model `
+.\.venv-dev\Scripts\python.exe -m src.models.register_checked_model `
   --run-dir outputs/phase2_reproduction_demo/training
 ```
 
@@ -114,8 +130,9 @@ These standalone commands are for a run that has not already completed those sta
 To export a separately registered result:
 
 ```powershell
-.\.venv\Scripts\python.exe -m src.models.export_serving_bundle `
+.\.venv-dev\Scripts\python.exe -m src.models.export_serving_bundle `
   --release-dir outputs/phase2_reproduction_demo/training `
+  --allow-unversioned-data `
   --bundle-dir outputs/phase2_reproduction_demo/serving
 ```
 

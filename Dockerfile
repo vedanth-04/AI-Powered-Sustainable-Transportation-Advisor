@@ -13,7 +13,7 @@ RUN python -m pip install --disable-pip-version-check --no-cache-dir \
 COPY src/__init__.py src/config.py ./src/
 COPY src/api/ ./src/api/
 COPY src/features/ ./src/features/
-COPY outputs/phase2_serving/manifest.json outputs/phase2_serving/model.joblib ./release/
+COPY outputs/phase2_serving/ ./release/
 
 USER 10001:10001
 EXPOSE 8000

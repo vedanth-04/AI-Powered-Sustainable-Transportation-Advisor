@@ -61,7 +61,7 @@ def create_app(bundle_dir: Path | None = None) -> FastAPI:
     async def lifespan(application: FastAPI):
         path = bundle_dir or Path(os.environ.get("BUS_MODEL_BUNDLE_DIR", str(DEFAULT_BUNDLE_DIR)))
         try:
-            application.state.bundle = load_bundle(path)
+            application.state.bundle = load_bundle(path, expected_manifest_sha256=os.environ.get('BUS_MODEL_MANIFEST_SHA256'))
         except Exception:
             # Keep readiness available to report a bundle load failure.
             logger.exception("Could not load the serving bundle at %s", path)

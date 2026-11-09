@@ -78,6 +78,8 @@ Run the full existing suite in a prepared test environment with `python -m pytes
 
 ## CI, delivery and remaining scope
 
+November 9 implementation adds a versioned provenance manifest and full approval revalidation at registration/export, registry approval hash tags, held-out prediction parity and trusted manifest-pin support. Legacy v1 loading is verified on a separate copy of the actual approved model. New release export requires DVC lineage and clean source; research fixtures are explicitly ineligible. Batch C passed 104 full-suite tests plus 8 lineage tests. Shared registry infrastructure and the missing multi-day input remain blockers; no new real release or image was created.
+
 [CI](.github/workflows/ci.yml) tests code and a **synthetic 6.25-minute fixture**. The [v1 release workflow](.github/workflows/release.yml) checks the approved bundle and real model, publishes GHCR, then pulls and tests the exact digest on a fresh runner. It triggers only on `phase2-image-v1`; do not recreate that existing tag. The [captured evidence PDF](output/pdf/Phase_2_Demonstration_Evidence.pdf) records earlier results/screenshots, not the November 9 test execution.
 
 GitHub Actions automates checks and image release. A local command initiates workstation deployment. Four-segment serving, shared-registry release orchestration, complete baked lineage, structured request logging and protected VM/HTTPS deployment remain gaps against the Phase 2 guide. See the [full requirement matrix](docs/phase2_submission_checklist.md#2-requirement-by-requirement-audit) before claiming Phase 2 is complete.

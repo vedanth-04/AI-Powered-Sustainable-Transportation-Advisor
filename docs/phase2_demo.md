@@ -1,5 +1,7 @@
 # Phase 2 demonstration and teammate deployment guide
 
+Batch C demonstrates manifest v2 and approval/export integrity through isolated fixture tests (`tests/test_registration.py`, `tests/test_quality.py`, `tests/test_release_lineage.py`). New exports compare every held-out prediction and record honest eligibility; SHA-only research inputs cannot become eligible releases. The unchanged actual v1 bundle also passed the updated loader/API checks. Do not present fixture registries as the absent original/shared registry or claim that a v2 image has been published.
+
 For the new daily-sample pipeline, show `python -m dvc dag`, `python -m dvc status` and `data/processed/sample_cold_start/features.lineage.json` in the clean environment. Batch B generated 152 real sample rows, repeated without processing, and passed 82 tests. Keep this one-day preparation separate from the historical 637-row model approval.
 
 For source/test demonstrations use the new clean setup: `powershell -File scripts/setup_dev.ps1 -RunTests`. Batch A on November 9 passed pip check, exact development pins and 80 tests (23 warnings) in a fresh environment. This supersedes the earlier mixed-environment limitation for development tests; it does not recreate the original real-data registry. Keep the published v1 demonstration below separate.

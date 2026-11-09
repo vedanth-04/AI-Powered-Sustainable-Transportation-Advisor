@@ -54,6 +54,8 @@ def register_checked_model(run_dir: Path) -> dict:
     registration_path = run_dir / "registration.json"
     if registration_path.exists():
         raise FileExistsError(f"Registration already recorded at {registration_path}; choose a new run directory.")
+    from src.models.release_integrity import verify_release_reports
+    verify_release_reports(run_dir)
     run_bytes = (run_dir / "run_report.json").read_bytes()
     run = json.loads(run_bytes)
     quality = json.loads((run_dir / "quality_report.json").read_bytes())
@@ -127,7 +129,10 @@ def register_checked_model(run_dir: Path) -> dict:
         reloaded = mlflow.sklearn.load_model(model_uri)
         predictions = np.asarray(reloaded.predict(features), dtype=float)
         _require(predictions.shape == expected.shape and np.isfinite(predictions).all() and (predictions > 0).all() and np.allclose(predictions, expected, rtol=0, atol=1e-8), "The registered model does not reproduce the approved held-out predictions.")
-        tags = {"joblib_sha256": digest, "demo_route": "90", "demo_segment": SEGMENT, "quality_gate": "passed_historical_demo"}
+        tags = {"joblib_sha256": digest, "demo_route": "90", "demo_segment": SEGMENT, "quality_gate": "passed_historical_demo",
+                'quality_report_sha256': sha256((run_dir / 'quality_report.json').read_bytes()).hexdigest(),
+                'run_report_sha256': quality['run_report_sha256'],
+                'dependency_lock_sha256': quality['environment_identity']['dependency_lock_sha256']}
         for key, value in tags.items():
             client.set_model_version_tag(registered.name, registered.version, key, value)
         observed = client.get_model_version(registered.name, registered.version)
@@ -138,6 +143,10 @@ def register_checked_model(run_dir: Path) -> dict:
             "training_run_id": run_id, "joblib_sha256": digest,
             "quality_report": "quality_report.json", "approved_scope": scope["assessment"],
             "verified_predictions": len(features),
+            'registry_uri': uri, 'approval_schema_version': 2,
+            'quality_report_sha256': tags['quality_report_sha256'],
+            'run_report_sha256': tags['run_report_sha256'],
+            'dependency_lock_sha256': tags['dependency_lock_sha256'],
         }
         with registration_path.open("x", encoding="utf-8") as stream:
             created_report = True

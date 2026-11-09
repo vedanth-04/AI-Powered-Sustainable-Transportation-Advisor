@@ -20,7 +20,7 @@ from src.models.train_cold_start import split_by_date
 
 
 @pytest.fixture
-def trained_run(tmp_path, monkeypatch):
+def trained_run(tmp_path, monkeypatch, request):
     traversals_path = tmp_path / "traversals.csv"
     rows = []
     for day in (1, 2, 3, 5, 8):
@@ -40,6 +40,10 @@ def trained_run(tmp_path, monkeypatch):
     train, validation, test = [engineer_features(frame, use_observed_history=False) for frame in split_by_date(traversals, date(2019, 7, 5), date(2019, 7, 8))]
     features = CATEGORICAL_FEATURES + NUMERIC_FEATURES
     models = build_candidate_models()
+    if getattr(request, 'param', None) == 'losing':
+        from sklearn.dummy import DummyRegressor
+        for name in models.keys() - {BASELINE_NAME}:
+            models[name].set_params(regressor=DummyRegressor(strategy='constant', constant=30.0))
     scores = {}
     for name, model in models.items():
         model.fit(train[features], train[TARGET_COLUMN])
@@ -151,3 +155,24 @@ def test_nested_junit_cannot_hide_a_failed_parent_testcase(tmp_path):
     )
     with pytest.raises(ValueError, match="must not mix"):
         check_quality.junit_counts(junit)
+
+
+@pytest.mark.parametrize('trained_run', ['losing'], indirect=True)
+def test_recomputed_losing_candidate_cannot_be_approved(trained_run):
+    run_dir, junit, _ = trained_run
+    with pytest.raises(ValueError, match='candidate_beats_median_on_validation_and_test'):
+        check_quality.check_model_quality(run_dir, junit)
+    failure = json.loads((run_dir / 'quality_report.json').read_bytes())
+    assert failure['quality_gate_passed'] is False
+    assert failure['failed_check'] == 'candidate_beats_median_on_validation_and_test'
+
+
+def test_failed_quality_cli_returns_nonzero(trained_run):
+    import subprocess
+    import sys
+    run_dir, junit, _ = trained_run
+    junit.write_text('<testsuite tests="0" failures="0" errors="0" skipped="0"/>')
+    result = subprocess.run([sys.executable, '-B', '-m', 'src.models.check_quality',
+                             '--run-dir', str(run_dir), '--pytest-xml', str(junit)], capture_output=True, text=True)
+    assert result.returncode != 0
+    assert 'Quality gate failed' in result.stderr

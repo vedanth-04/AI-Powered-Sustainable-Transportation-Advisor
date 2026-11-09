@@ -268,14 +268,22 @@ def check_model_quality(run_dir: Path, pytest_xml: Path) -> dict:
         require(report["checks"].keys() == required_checks(candidate) and all(report["checks"].values()),
                 "The approval report does not contain the complete required checks.")
         report["quality_gate_passed"] = True
-        report["working_tree_source_sha256"] = {
-            path: sha256((ROOT / path).read_bytes()).hexdigest()
-            for path in ("src/features/build_features.py", "src/models/train.py", "src/models/train_cold_start.py", "src/models/check_quality.py")
-        }
-        try:
-            report["git_head"] = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, timeout=10).strip()
-        except (OSError, subprocess.SubprocessError):
-            report["git_head"] = None
+        from src.models.provenance import data_identity, environment_identity, source_identity
+        report.update(source_identity())
+        report['features'] = run['features']
+        report['approval_schema_version'] = 2
+        report['environment_identity'] = environment_identity()
+        lineage_path = Path(run['data_lineage_file']) if run.get('data_lineage_file') else None
+        report['data_identity'] = data_identity(traversals_path, lineage_path)
+        if run.get('data_identity', report['data_identity']) != report['data_identity']:
+            raise ValueError('Training data provenance changed before approval.')
+        report['split_row_indices'] = {name: [int(index) for index in split.index]
+                                       for name, split in zip(('train', 'validation', 'test'), splits)}
+        if run.get('split_row_indices', report['split_row_indices']) != report['split_row_indices']:
+            raise ValueError('Training split membership differs from approval.')
+        training_provenance = run.get('training_provenance')
+        if training_provenance and any(training_provenance[key] != report[key] for key in ('git_head', 'working_tree_source_sha256')):
+            raise ValueError('Training source differs from evaluated approval source.')
     except Exception as exc:
         report["quality_gate_passed"] = False
         report["checks"][stage] = False

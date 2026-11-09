@@ -105,6 +105,41 @@ def test_hash_mismatch_makes_api_unready(model_bundle):
         assert client.post("/predict/bus", json=REQUEST).status_code == 503
 
 
+@pytest.mark.parametrize('failure', ['missing-model', 'missing-manifest', 'bad-json', 'wrong-runtime', 'wrong-schema', 'wrong-policy'])
+def test_unusable_artifacts_fail_closed(model_bundle, failure):
+    bundle_dir, _ = model_bundle
+    path = bundle_dir / 'manifest.json'
+    manifest = json.loads(path.read_bytes())
+    if failure == 'missing-model':
+        (bundle_dir / 'model.joblib').unlink()
+    elif failure == 'missing-manifest':
+        path.unlink()
+    elif failure == 'bad-json':
+        path.write_text('{bad json')
+    else:
+        key, value = {'wrong-runtime': ('scikit_learn_version', '0.0.0'),
+                      'wrong-schema': ('features', ['unknown']),
+                      'wrong-policy': ('history_policy', 'observed_history')}[failure]
+        manifest[key] = value
+        path.write_text(json.dumps(manifest))
+    with TestClient(create_app(bundle_dir)) as client:
+        assert client.get('/health').status_code == 503
+        assert client.post('/predict/bus', json=REQUEST).status_code == 503
+
+
+def test_trusted_manifest_pin_rejects_forgery_before_deserialization(model_bundle, monkeypatch):
+    from src.api import bundle
+    directory, _ = model_bundle
+    trusted_digest = sha256((directory / 'manifest.json').read_bytes()).hexdigest()
+    manifest = json.loads((directory / 'manifest.json').read_bytes())
+    manifest['model_version'] = 999
+    (directory / 'manifest.json').write_text(json.dumps(manifest))
+    monkeypatch.setattr(bundle.joblib, 'load', lambda *args: pytest.fail('Forged manifest reached joblib'))
+    monkeypatch.setenv('BUS_MODEL_MANIFEST_SHA256', trusted_digest)
+    with TestClient(create_app(directory)) as client:
+        assert client.get('/health').status_code == 503
+
+
 @pytest.mark.parametrize(
     "override",
     [

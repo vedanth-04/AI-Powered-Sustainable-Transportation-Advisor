@@ -60,9 +60,13 @@ def train_cold_start_models(
     output_dir: Path,
     *,
     tracking_db: Path | None = None,
+    data_lineage: Path | None = None,
 ) -> dict:
     """Fit all candidates, choose on validation, and test that tree against the median."""
     traversals = load_training_features(traversals_path)
+    from src.models.provenance import data_identity, environment_identity, source_identity
+    provenance = {**source_identity(), **environment_identity(),
+                  'data_identity': data_identity(traversals_path, data_lineage)}
     splits = split_by_date(traversals, validation_start, test_start)
     training, validation, test = [
         engineer_features(split, use_observed_history=False) for split in splits
@@ -116,6 +120,9 @@ def train_cold_start_models(
         joblib.dump(models[name], path)
 
     report = {
+        'training_provenance': provenance,
+        'data_identity': provenance['data_identity'],
+        'data_lineage_file': str(data_lineage.resolve()) if data_lineage else None,
         "history_policy": "cold_start_v1",
         "features": feature_columns,
         "traversals": str(traversals_path),
@@ -123,6 +130,8 @@ def train_cold_start_models(
         "validation_start_ist": validation_start.isoformat(),
         "test_start_ist": test_start.isoformat(),
         "split_counts": {"train": len(training), "validation": len(validation), "test": len(test)},
+        'split_row_indices': {name: [int(index) for index in split.index]
+                              for name, split in zip(('train', 'validation', 'test'), splits)},
         "split_dates_ist": {
             name: sorted(pd.to_datetime(split["t_entry"], unit="s", utc=True)
                          .dt.tz_convert(IST_OFFSET).dt.strftime("%Y-%m-%d").unique().tolist())
@@ -194,8 +203,10 @@ if __name__ == "__main__":
     parser.add_argument("--test-start", type=date.fromisoformat, required=True)
     parser.add_argument("--output-dir", type=Path, default=OUTPUTS_DIR / "phase2_cold_start")
     parser.add_argument("--tracking-db", type=Path, help="Optional local SQLite tracking database.")
+    parser.add_argument('--data-lineage', type=Path, help='Verified DVC preparation lineage JSON for this exact input.')
     args = parser.parse_args()
     train_cold_start_models(
         args.traversals, args.validation_start, args.test_start, args.output_dir,
         tracking_db=args.tracking_db,
+        data_lineage=args.data_lineage,
     )
