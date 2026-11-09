@@ -7,11 +7,11 @@
 Training now saves `<model>_feature_importance.csv` and `.png` in `outputs/` and logs them to MLflow for each model. These use 20 seeded permutations per original input column on the chronological test set, scoring the increase in MAE in minutes. A larger positive increase means greater model reliance. Zero/negative importance means no demonstrated improvement in this evaluation; correlated features can mask each other. Shuffle standard deviations are not confidence intervals. These diagnostics do not prove causality or justify selecting features using the same test set. Use separate chronological validation folds for feature selection. Corrected real-data retraining is now complete; see [measured results](results/2026-10-16-corrected/README.md) for rankings, corrected metrics, and limitations.
 
 
-**Project:** AI-Powered Sustainable Transportation Advisor  
-**Phase:** Phase 4 Deliverable — Feature Engineering & Leakage Safeguards  
-**Date:** October 2026  
-**Generated Dataset:** `data/processed/features.csv` (152 rows, 24 columns)  
-**Status:** **Completed & Verified** with 21 automated unit tests passing  
+**Project:** AI-Powered Sustainable Transportation Advisor<br>
+**Stage:** Phase 1 batch-pipeline feature engineering (historically called internal Phase 4)<br>
+**Date:** October 2026<br>
+**Generated Dataset:** `data/processed/features.csv` (152 rows, 24 columns)<br>
+**Evidence:** Historical stage record; current test execution and limitations are in the [Phase 2 audit](phase2_submission_checklist.md).<br>
 
 ---
 
@@ -29,7 +29,7 @@ PAST (< t_entry)                        PREDICTION MOMENT (t_entry)            F
   where t_exit(j) ≤ t_entry(i)         │   travel_time_minutes                 │ • Internal signals/dwell
 • Vehicle entry hour & minute of day   │                                       │ • Exit gate crossing: t_exit
 • Route, segment, & corridor length    │   (Target is strictly in the future)  │ • Ground-truth travel time
-• Pre-entry approach speed             │                                       │   (STRICTLY LEAK-PROTECTED)
+• No speed predictor is used             │                                       │   (STRICTLY LEAK-PROTECTED)
 ```
 
 **Leakage Protection Invariant:**
@@ -45,7 +45,7 @@ $$t_{\text{exit}, j} \le t_{\text{entry}, i}$$
 | Feature Name | Category | Type | Unit | Description & Derivation |
 |---|---|---|---|---|
 | `segment_id` | Spatial | `str` (Cat) | Categorical | Identifier of the physical road segment (e.g., `ORR_CHIRAG_TO_NEHRU_PLACE_EB`). |
-| `corridor_name` | Spatial | `str` (Cat) | Categorical | High-level transit corridor (Outer Ring Road vs. Mehrauli-Badarpur Road). |
+| `corridor_name` | Metadata only | `str` | Categorical | Retained in traversal data; excluded from the 12 model inputs. |
 | `direction` | Spatial | `str` (Cat) | Categorical | Direction of travel (`EASTBOUND` vs. `WESTBOUND`). |
 | `route_id` | Network | `str` (Cat) | Categorical | Bus route number (e.g., `'90'`, `'83'`, `'398'`, `'399'`). |
 | `segment_length_km`| Spatial | `float` | Kilometers | Great-circle Haversine distance between entry and exit gates ($2.63\text{ km}$ on ORR, $2.93\text{ km}$ on MB Road). |
@@ -75,7 +75,7 @@ When a bus enters a segment early in the morning and zero previous buses have ex
 1. `hist_completed_count` is set to $0$.
 2. `hist_segment_median_tt` and `hist_recent_60m_mean_tt` fall back to the nominal physical travel time:
    $$\text{nominal\_fallback\_minutes} = \frac{\text{segment\_length\_km}}{v_{\text{nominal}}} \times 60.0$$
-   where $v_{\text{nominal}} = 22.0\text{ km/h}$ (the empirical fleet-wide moving average bus speed).
+   where $v_{\text{nominal}} = 22.0\text{ km/h}$ is the configured fallback assumption, not a guarantee about current traffic. Phase 2 `cold_start_v1` applies this fallback to every row, including training and evaluation.
 
 ### Concurrent Overlap Protection
 If Bus A enters at 08:15 and exits at 08:23, and Bus B enters at 08:19:
@@ -87,8 +87,8 @@ If Bus A enters at 08:15 and exits at 08:23, and Bus B enters at 08:19:
 
 ## 4. Categorical Encoding & Unseen Route Policy
 
-### Handling of Unseen Routes in Production
-In real-world deployment, transit agencies frequently re-route buses or introduce feeder lines. Our pipeline handles unseen categorical values gracefully:
+### Encoder behavior and API coverage
+The encoder can ignore unknown categories, but that does not establish predictive accuracy on them. The approved API rejects every route/segment pair outside its manifest with HTTP 422. Internally:
 1. **Scikit-Learn OneHotEncoder** is configured with `handle_unknown="ignore"`:
    - When an unfamiliar `route_id` appears at inference time, all one-hot columns for route are zeroed out.
    - The model relies on the strong spatial features (`segment_id`, `direction`, `segment_length_km`), temporal features (`minute_of_day`, `rush_hour_cat`), and historical traffic state (`hist_recent_60m_mean_tt`) to produce robust predictions.
@@ -100,7 +100,7 @@ In real-world deployment, transit agencies frequently re-route buses or introduc
 
 ## 5. Verification & Unit Testing
 
-The feature engineering module [`src/features/build_features.py`](file:///C:/Users/Yashaswini%20Kanthraj/.gemini/antigravity/scratch/AI-Powered-Sustainable-Transportation-Advisor/src/features/build_features.py) is verified with 5 unit tests in [`tests/test_feature_engineering.py`](file:///C:/Users/Yashaswini%20Kanthraj/.gemini/antigravity/scratch/AI-Powered-Sustainable-Transportation-Advisor/tests/test_feature_engineering.py):
+The feature engineering module [`src/features/build_features.py`](../src/features/build_features.py) is verified with 5 unit tests in [`tests/test_feature_engineering.py`](../tests/test_feature_engineering.py):
 
 ```text
 tests/test_feature_engineering.py::test_rush_hour_categories PASSED

@@ -1,14 +1,14 @@
-# Model Training, Benchmarking, and Evaluation Report
+# Historical pre-correction model benchmarking report
 
 > **Superseded benchmark:** The scores and model-selection claims below were produced before removing the target-derived `approach_speed_kmh` feature. They are retained as historical records, not validated performance of the corrected pipeline. Regenerate features and rerun `python -m src.models.train` to obtain corrected metrics and per-model permutation-importance CSVs/plots. Corrected results are now available in [the measured-results report](results/2026-10-16-corrected/README.md): Random Forest MAE 1.8694 minutes, Gradient Boosting 1.9427 minutes, baseline 2.4412 minutes.
 
-**Project:** AI-Powered Sustainable Transportation Advisor  
-**Phase:** Phase 5 & 6 Deliverable — Model Training, Evaluation, and MLflow Integration  
-**Date:** October 2026  
-**Experiment Name:** `BusTravelTime-ModelSelection`  
-**Registered Model Name:** `BusTravelTimePredictor` (Version 1)  
-**Winning Model:** Gradient Boosting Regressor ($\text{MAE} = 0.62\text{ min}$, $R^2 = 0.850$)  
-**Status:** **Completed & Verified** with MLflow experiment tracking and model registration  
+**Project:** AI-Powered Sustainable Transportation Advisor<br>
+**Phase:** Phase 5 & 6 Deliverable — Model Training, Evaluation, and MLflow Integration<br>
+**Date:** October 2026<br>
+**Experiment Name:** `BusTravelTime-ModelSelection`<br>
+**Registered Model Name:** `BusTravelTimePredictor` (Version 1)<br>
+**Winning Model:** Gradient Boosting Regressor ($\text{MAE} = 0.62\text{ min}$, $R^2 = 0.850$)<br>
+**Status:** Superseded pre-correction snapshot. Version numbers refer to that historical store, not the November release registry.<br>
 
 ---
 
@@ -35,7 +35,7 @@ TIMELINE (July 1, 2019)
 
 - **Training Set**: First 114 traversals ($t_{\text{entry}} \le 1561978200$)
 - **Test Set**: Final 38 traversals ($t_{\text{entry}} > 1561978200$)
-- **Guaranteed Condition**: $\min(t_{\text{entry, test}}) \ge \max(t_{\text{entry, train}})$. Zero future information leaked into model parameters or historical aggregates.
+- **Guaranteed Condition**: $\min(t_{\text{entry, test}}) \ge \max(t_{\text{entry, train}})$. This entry-time ordering alone does not ensure that every fitted label completed by the cutoff; Phase 2 adds completion-aware date splits. The removed speed input invalidated the original performance claims.
 
 ---
 

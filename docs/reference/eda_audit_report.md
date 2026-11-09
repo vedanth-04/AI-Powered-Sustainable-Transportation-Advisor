@@ -1,10 +1,12 @@
 # Exploratory Data Analysis (EDA) Audit Report
 
-**Project:** AI-Powered Sustainable Transportation Advisor  
-**Phase:** Phase 1 Deliverable — Empirical Audit of Prior EDA Findings  
-**Date:** October 2026  
-**Audited Database:** `data/raw/2019-07-01.db` (July 1, 2019 — Monday, 1,977,922 observations)  
-**Status:** **Completed & Empirically Verified** via read-only SQL queries and Python kinematics auditing  
+> Historical Phase 1 reference retained for context. Internal phase numbers and planned filenames describe the earlier stage; use the [project chronology](../summaries/pipeline_overview.md) and [current audit](../phase2_submission_checklist.md) for present status.
+
+**Project:** AI-Powered Sustainable Transportation Advisor<br>
+**Phase:** Phase 1 Deliverable — Empirical Audit of Prior EDA Findings<br>
+**Date:** October 2026<br>
+**Audited Database:** `data/raw/2019-07-01.db` (July 1, 2019 — Monday, 1,977,922 observations)<br>
+**Status:** **Completed & Empirically Verified** via read-only SQL queries and Python kinematics auditing<br>
 
 ---
 

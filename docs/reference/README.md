@@ -1,23 +1,10 @@
-# Project Documentation Directory (`docs/`)
+# Historical references and current navigation
 
-This directory contains in-depth documentation, dataset licensing and attribution records, technical reports, and architecture specifications for the **AI-Powered Sustainable Transportation Advisor**.
+These documents preserve the October 2026 scaffold and audit history. Their internal stage numbers are not the academic Phase 2 deployment milestone. Statements such as "not initialized", "planned modules" or old stage test counts are historical, not current completion claims.
 
-## Documentation Files
+- [Schema, source terms and acquisition audit](schema_audit_report.md): original daily data inventory; DVC was initialized after this snapshot.
+- [Fleet-wide EDA audit](eda_audit_report.md): detailed checks beyond Route 90; proposed thresholds differ from later code. Causes inferred from GPS data are hypotheses, not observed diagnoses.
+- [DVC team setup](dvc_team_setup.md): secure DagsHub access and dataset retrieval instructions; current raw-data pointer remains in the repository.
+- [Data lifecycle plan](data_README.md), [notebook plan](notebooks_README.md), [source layout plan](src_README.md), [test plan](tests_README.md): original design intent, with some modules never created under those exact names.
 
-- `dataset_access_and_terms.md` (to be authored in Phase 2): Detailed log of dataset licensing, terms of access, citations, and data privacy considerations.
-- `schema_audit_report.md` (to be authored in Phase 2): Complete audit report of SQLite tables, columns, data types, timestamp anomalies, missingness, and GPS sampling characteristics.
-- `label_derivation_specification.md` (to be authored in Phase 3): Formal mathematical and geometric definition of segment boundary transits, time-window constraints, and rejection thresholds for invalid journeys.
-- `model_benchmarking_report.md` (to be authored in Phase 4): Baseline vs. Random Forest vs. Gradient Boosting evaluation comparisons across MAE, RMSE, and route/hour slices.
-
-## Academic Review Reference
-
-- **Review Period:** 13–17 October 2026 (Class Hours).
-- **Deliverables Required:**
-  1. Dataset acquisition & usage-term checks.
-  2. Data exploration and audit evidence.
-  3. Feature engineering and label derivation logic.
-  4. Baseline model selection and evaluation.
-  5. Clean Git/GitHub repository with collaborative history.
-  6. DVC dataset versioning.
-  7. MLflow experiment tracking.
-  8. Model comparison and route/time-slice error analysis.
+For current facts use the [project chronology](../summaries/pipeline_overview.md), [EDA overview](../eda_report.md), [feature specification](../feature_engineering_report.md), [Phase 2 audit](../phase2_submission_checklist.md) and [faculty demo](../phase2_demo.md). The existing technical reports and result snapshots are retained rather than duplicated here.

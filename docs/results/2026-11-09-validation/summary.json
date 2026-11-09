@@ -1,0 +1,351 @@
+{
+  "checked_at_utc": "2026-11-09T13:52:19.754464+00:00",
+  "source_commit": "2358995067f71e4c28057bc4ddf4c97f77d3429b",
+  "scope": "Documentation and validation audit; no application change, approved-model retraining, rebuild or redeployment.",
+  "contribution": "Vedanth: November 9 Windows Docker/WSL setup and local verification; separate from prior implementation commits authored Vikasyk.",
+  "references": [
+    {
+      "file_name": "Experiential_Learning_Phase_1_Presentation.pptx.pdf",
+      "sha256": "a790a823d183a46d073ee5f962aaca3cddfa733235f3b525ea23696946caaf6c",
+      "availability": "Supplied local reference; not committed"
+    },
+    {
+      "file_name": "Transportation_Advisor_Phase_2_Implementation_Guide.pdf",
+      "sha256": "783fe06d9f702e48d667a3b4209450706de2720ad1941be013202e6b3bc59151",
+      "availability": "Supplied local reference; not committed"
+    }
+  ],
+  "automated_suite": [
+    {
+      "evidence": "outputs/local_setup/project-audit-20261109-132719/pytest.xml",
+      "environment": "Existing development libraries with isolated pytest; MLflow 3.17.1",
+      "tests": 80,
+      "failures": 2,
+      "errors": 0,
+      "skipped": 0,
+      "passed": 78,
+      "seconds": 106.395,
+      "unsuccessful_cases": [
+        "test_sqlite_registration_reloads_and_exports_approved_model",
+        "test_failed_registered_reload_is_not_marked_approved"
+      ]
+    },
+    {
+      "evidence": "outputs/local_setup/project-audit-20261109-132719/pytest-compatible.xml",
+      "environment": "Isolated MLflow/skinny 3.1.4; borrowed SQLAlchemy 2.1.4",
+      "tests": 80,
+      "failures": 0,
+      "errors": 7,
+      "skipped": 0,
+      "passed": 73,
+      "seconds": 34.303,
+      "unsuccessful_cases": [
+        "test_sqlite_registration_reloads_and_exports_approved_model",
+        "test_changed_approval_inputs_fail_before_registry_access[failed-check]",
+        "test_changed_approval_inputs_fail_before_registry_access[candidate-bytes]",
+        "test_changed_approval_inputs_fail_before_registry_access[training-report]",
+        "test_changed_approval_inputs_fail_before_registry_access[pytest-report]",
+        "test_changed_approval_inputs_fail_before_registry_access[evaluated-source]",
+        "test_failed_registered_reload_is_not_marked_approved"
+      ]
+    },
+    {
+      "evidence": "outputs/local_setup/project-audit-20261109-132719/pytest-final.xml",
+      "environment": "Isolated MLflow/skinny 3.1.4 and SQLAlchemy 2.0.57; other development packages borrowed read-only",
+      "tests": 80,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "passed": 80,
+      "seconds": 74.938,
+      "unsuccessful_cases": []
+    }
+  ],
+  "final_test_runtime": {
+    "python": "3.12.5",
+    "packages": {
+      "pytest": "9.2.0",
+      "mlflow": "3.1.4",
+      "mlflow-skinny": "3.1.4",
+      "sqlalchemy": "2.0.57",
+      "numpy": "2.5.4",
+      "pandas": "3.0.6",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1",
+      "matplotlib": "3.11.2",
+      "fastapi": "0.143.1",
+      "httpx": "0.28.1",
+      "pydantic": "2.14.1",
+      "seaborn": "0.13.2",
+      "joblib": "1.6.0"
+    }
+  },
+  "final_suite_warning_count": 61,
+  "dependency_install": {
+    "exact_ci_lock": "FAILED: anyio==4.16.0 unavailable from configured Windows package index",
+    "isolated_pytest": "9.2.0",
+    "environment_only_alignment": [
+      "mlflow==3.1.4",
+      "mlflow-skinny==3.1.4",
+      "sqlalchemy==2.0.57"
+    ],
+    "test_environment_pip_check": "FAILED: greenlet missing; pandas, pyarrow, cachetools, importlib-metadata and packaging violate MLflow/SQLAlchemy constraints. Passing fixtures do not establish dependency/release parity.",
+    "lock_files_modified": false,
+    "original_development_environment_unchanged": {
+      "mlflow": "3.17.1",
+      "sqlalchemy": "2.1.4"
+    }
+  },
+  "data_readonly_check": {
+    "rows": 1977922,
+    "vehicles": 1547,
+    "routes": 476,
+    "trips": 5194,
+    "min_epoch": 1561939200,
+    "max_epoch": 1562025599,
+    "zero_speed_rows": 662614,
+    "distinct_speeds": 22,
+    "max_speed": 5.833333492279053,
+    "inventory_sql": "SELECT COUNT(*),COUNT(DISTINCT vehicle_id),COUNT(DISTINCT route_id),COUNT(DISTINCT trip_id),MIN(CAST(timestamp AS INTEGER)),MAX(CAST(timestamp AS INTEGER)),SUM(speed=0),COUNT(DISTINCT speed),MAX(speed) FROM vehicle_feed",
+    "integrity": "ok",
+    "missing_by_column": {
+      "vehicle_id": 0,
+      "lat": 0,
+      "lng": 0,
+      "speed": 0,
+      "route_id": 0,
+      "trip_id": 0,
+      "timestamp": 0,
+      "date": 0,
+      "time": 0
+    },
+    "duplicate_vehicle_timestamp": 73034,
+    "top_routes": [
+      {
+        "route_id": 90.0,
+        "pings": 35446,
+        "vehicles": 39,
+        "trips": 39
+      },
+      {
+        "route_id": 399.0,
+        "pings": 33814,
+        "vehicles": 37,
+        "trips": 36
+      },
+      {
+        "route_id": 398.0,
+        "pings": 32967,
+        "vehicles": 36,
+        "trips": 36
+      },
+      {
+        "route_id": 83.0,
+        "pings": 32565,
+        "vehicles": 37,
+        "trips": 37
+      },
+      {
+        "route_id": 164.0,
+        "pings": 20845,
+        "vehicles": 28,
+        "trips": 28
+      }
+    ],
+    "md5": "e3c31e6255359b7a4ebf93b3154659b2",
+    "sha256": "7f3511ec1a16922e48715964f66cfe66e944a197b7eca501cdedbe93ea81f9ae"
+  },
+  "dvc": {
+    "pointer": "data/raw/2019-07-01.db.dvc",
+    "automatic_status": "No data or pipelines tracked; Repo.index.stages is empty (unresolved stage-discovery anomaly).",
+    "explicit_stage_parse": "PASS: expected MD5 parsed",
+    "explicit_remote_object_status": {
+      "ok": [
+        "md5: e3c31e6255359b7a4ebf93b3154659b2"
+      ],
+      "missing": [],
+      "new": [],
+      "deleted": []
+    },
+    "interpretation": "Known object present in local cache and reachable teamstorage remote; no dataset download or DVC configuration change. This is not proof of all teammates permissions."
+  },
+  "original_laptop_verification": {
+    "checked_at_utc": "2026-11-09T13:20:21.512113+00:00",
+    "evidence_directory": "outputs/local_setup/verification-20261109-131834",
+    "deployment_checks_passed": 8,
+    "overall_passed": true,
+    "model_identity": {
+      "manifest": {
+        "model_name": "BusTravelTimePredictor",
+        "model_version": 1,
+        "history_policy": "cold_start_v1",
+        "features": [
+          "segment_id",
+          "direction",
+          "route_id",
+          "rush_hour_cat",
+          "segment_length_km",
+          "entry_hour",
+          "minute_of_day",
+          "sin_time",
+          "cos_time",
+          "hist_segment_median_tt",
+          "hist_recent_60m_mean_tt",
+          "hist_completed_count"
+        ],
+        "model_sha256": "b26d1a45f8e97278b8be70eef9c6c88e39b7d52537d55bea6a206b3391934a88",
+        "scikit_learn_version": "1.5.2",
+        "segment_id": "ORR_CHIRAG_TO_NEHRU_PLACE_EB",
+        "route_id": "90"
+      },
+      "artifact_sha256": "b26d1a45f8e97278b8be70eef9c6c88e39b7d52537d55bea6a206b3391934a88",
+      "model_class": "Pipeline",
+      "estimator_class": "GradientBoostingRegressor"
+    }
+  },
+  "audit_runtime_recheck": {
+    "checked_at_utc": "2026-11-09T13:41:31.653374+00:00",
+    "overall_passed": true,
+    "deployment_checks_passed": 8,
+    "container_unchanged": true,
+    "container_health": "healthy",
+    "container_user": "10001:10001",
+    "image": "ghcr.io/vedanth-04/ai-powered-sustainable-transportation-advisor/bus-travel-time@sha256:0250462721176db01d63cd77f93ba7647dd7c94890dc1f7d6e7025e85e2b5dad",
+    "image_source_revision": "44d31e188ec0e7ad10bf439a4b53f42f0774e63d",
+    "service_url": "http://127.0.0.1:8001",
+    "health": {
+      "case": "readiness",
+      "status": 200,
+      "response": {
+        "status": "ready",
+        "model_name": "BusTravelTimePredictor",
+        "model_version": 1,
+        "history_policy": "cold_start_v1"
+      }
+    },
+    "supported_prediction": {
+      "case": "approved_prediction",
+      "status": 200,
+      "request": {
+        "segment_id": "ORR_CHIRAG_TO_NEHRU_PLACE_EB",
+        "route_id": "90",
+        "entry_at": "2019-07-08T17:10:00+05:30"
+      },
+      "response": {
+        "duration_minutes": 6.320402254818158,
+        "model_version": 1,
+        "estimate_source": "model",
+        "history_policy": "cold_start_v1"
+      }
+    },
+    "invalid_requests": [
+      {
+        "case": "unsupported_route",
+        "status": 422,
+        "request": {
+          "segment_id": "ORR_CHIRAG_TO_NEHRU_PLACE_EB",
+          "route_id": "999",
+          "entry_at": "2019-07-08T17:10:00+05:30"
+        },
+        "response": {
+          "detail": "This route and segment are outside the approved demo scope."
+        }
+      },
+      {
+        "case": "unsupported_segment",
+        "status": 422,
+        "request": {
+          "segment_id": "unknown",
+          "route_id": "90",
+          "entry_at": "2019-07-08T17:10:00+05:30"
+        },
+        "response": {
+          "detail": "This route and segment are outside the approved demo scope."
+        }
+      },
+      {
+        "case": "missing_timezone",
+        "status": 422,
+        "request": {
+          "segment_id": "ORR_CHIRAG_TO_NEHRU_PLACE_EB",
+          "route_id": "90",
+          "entry_at": "2019-07-08T17:10:00"
+        },
+        "response": {
+          "detail": [
+            {
+              "type": "timezone_aware",
+              "loc": [
+                "body",
+                "entry_at"
+              ],
+              "msg": "Input should have timezone info",
+              "input": "2019-07-08T17:10:00"
+            }
+          ]
+        }
+      }
+    ],
+    "repository_smoke": "PASS",
+    "serving_lock_versions_match": true,
+    "serving_pip_check": "PASS; nonroot pip cache warning only"
+  },
+  "historical_evaluation_not_rerun": {
+    "quality_report": "docs/results/phase2-v1/quality_report.json",
+    "registry_record": "docs/results/phase2-v1/registration.json",
+    "processed_input_sha256": "243f568e1abc9d29e2fe9f665df36302a2aff61851438871de7ea4643dd5267b",
+    "original_run_id": "66c819ceb83740c18d05800213524441",
+    "original_registry_available_here": false,
+    "processed_637_row_input_available_here": false
+  },
+  "github_status_read_only": {
+    "inspected_main_ci": {
+      "id": 42342969930,
+      "head_sha": "2358995067f71e4c28057bc4ddf4c97f77d3429b",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/vedanth-04/AI-Powered-Sustainable-Transportation-Advisor/actions/runs/42342969930",
+      "created_at": "2026-11-07T05:30:00Z"
+    },
+    "v1_release": {
+      "run_url": "https://github.com/vedanth-04/AI-Powered-Sustainable-Transportation-Advisor/actions/runs/42330318360",
+      "publish_job": "success",
+      "verify_published_digest_job": "success",
+      "checked_via": "GitHub workflow run jobs connector; not rerun"
+    }
+  },
+  "not_verified": [
+    "Exact CI environment on Windows",
+    "Current traffic accuracy",
+    "Full-month inventory",
+    "Original real-data training/quality reproduction",
+    "Original shared or local registry UI",
+    "Live model-version rollback",
+    "Reboot/restart durability",
+    "Assigned VM/HTTPS deployment",
+    "Interactive Swagger browser rendering"
+  ],
+  "preservation": "Original verification directory hashes unchanged; approved container ID unchanged. No data, model, credential or local database included in tracked summary.",
+  "local_raw_logs": "outputs/local_setup/project-audit-20261109-132719",
+  "requirement_audit": {
+    "path": "docs/phase2_submission_checklist.md",
+    "rows": 58,
+    "counts": {
+      "V": 25,
+      "I": 1,
+      "P": 26,
+      "M": 3,
+      "B": 3
+    },
+    "scope_note": "Counts summarize grouped guide requirements; V means verified only for the evidence scope in that row, not global Phase 2 completion."
+  },
+  "documentation_checks": {
+    "markdown_files": 24,
+    "relative_links": 119,
+    "python_fenced_examples": 2,
+    "errors": 0,
+    "git_diff_check": "PASS",
+    "powershell_fenced_examples_parsed": 38,
+    "powershell_syntax_errors": 0
+  }
+}

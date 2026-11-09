@@ -1,5 +1,7 @@
 # Data Directory Architecture
 
+> Historical Phase 1 reference retained for context. Internal phase numbers and planned filenames describe the earlier stage; use the [project chronology](../summaries/pipeline_overview.md) and [current audit](../phase2_submission_checklist.md) for present status.
+
 This directory organizes data across its lifecycle for the **AI-Powered Sustainable Transportation Advisor** project.
 
 ## Directory Structure

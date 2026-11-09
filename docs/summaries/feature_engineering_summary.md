@@ -1,45 +1,12 @@
-# Feature Engineering Summary
-## What Features Does Our Model Use?
+# Feature engineering summary
 
-### Prediction Scenario
-> *"A bus is about to enter a road segment. Based on what we know RIGHT NOW, 
-> how long will it take to cross?"*
+Predict at segment entry, before the outcome is known. [Shared feature code](../../src/features/build_features.py) emits **12 model inputs**:
 
-### Feature Categories
+- Categorical: `segment_id`, `direction`, `route_id`, `rush_hour_cat`.
+- Numeric: `segment_length_km`, `entry_hour`, `minute_of_day`, `sin_time`, `cos_time`, `hist_segment_median_tt`, `hist_recent_60m_mean_tt`, `hist_completed_count`.
 
-#### 1. 🕐 Time-of-Day Features
-| Feature | Description | Why It Matters |
-|---------|-------------|----------------|
-| Hour (sin/cos) | Cyclical encoding of hour | Rush hour vs. off-peak |
-| Rush Hour Flag | Morning (8-10), Evening (5-8) | Traffic congestion patterns |
+The 24-column historical CSV included metadata and the target; it did not mean 24 predictor inputs. `corridor_name`, exit time, travel-time target and completed-trip speed are excluded. The removed `approach_speed_kmh` alias copied target-derived speed and must not be described as measured pre-entry speed.
 
-#### 2. 📊 Historical Traffic Features
-| Feature | Description | Why It Matters |
-|---------|-------------|----------------|
-| Median travel time (last 1h) | What recent buses experienced | Current traffic conditions |
-| Std deviation (last 1h) | How variable recent times are | Traffic predictability |
-| Count (last 1h) | How many buses crossed recently | Data reliability |
+Phase 1 observed-history experiments used same-segment traversals completed by the request time: a median over all eligible history, a mean over the last 60 minutes and total eligible count. There is no history-standard-deviation feature.
 
-> **Key Safeguard:** We ONLY use data from buses that **already finished** their trip 
-> before the current bus enters. This prevents data leakage (using future information).
-
-#### 3. 🚌 Approach Speed
-| Feature | Description | Why It Matters |
-|---------|-------------|----------------|
-| Speed at entry | Bus speed when entering segment | Current flow speed |
-
-### Total Features: 24 columns
-
-### Preventing Data Leakage
-```
-Timeline:  ──────────────────────────────→
-                    ↑                ↑
-           Previous buses      Current bus
-           FINISHED here      ENTERS here
-                    
-           ✅ Can use          🎯 Predicting
-           their data          this bus's time
-```
-
-We strictly ensure no future information leaks into predictions — 
-a critical requirement for valid machine learning models.
+The approved Phase 2 model uses **cold_start_v1** for fitting, evaluation and inference: both history durations equal `(segment_length_km / 22) * 60`, count is zero. Route IDs stay strings; time features are derived in IST; the API resolves direction and length from the catalog. Tests compare names, order, dtypes, values, encoded features and predictions. See the [full feature specification](../feature_engineering_report.md) and [requirement audit](../phase2_submission_checklist.md).

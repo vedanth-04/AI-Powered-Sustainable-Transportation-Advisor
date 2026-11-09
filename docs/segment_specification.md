@@ -1,10 +1,10 @@
 # Road Segment & Spatial Gate Specification Report
 
-**Project:** AI-Powered Sustainable Transportation Advisor  
-**Phase:** Phase 2 Deliverable — Target Feasibility & Road Segment Definition  
-**Date:** October 2026  
-**Audited Database:** `data/raw/2019-07-01.db`  
-**Status:** **Completed & Empirically Verified** across Delhi bus GPS observations  
+**Project:** AI-Powered Sustainable Transportation Advisor<br>
+**Stage:** Phase 1 batch-pipeline segment design (historically called internal Phase 2; distinct from the November MLOps milestone)<br>
+**Date:** October 2026<br>
+**Audited Database:** `data/raw/2019-07-01.db`<br>
+**Evidence:** Historical corridor study; current catalog and checks are implemented in [segment_config.py](../src/features/segment_config.py). Map alignment, interpolation error and every empirical table were not revalidated in the November audit.<br>
 
 ---
 
@@ -121,20 +121,20 @@ A crossing of vertical gate $x_{\text{gate}}$ occurs in direction $d \in \{+1, -
 The interpolated crossing timestamp $t_{\text{cross}}$ is:
 $$t_{\text{cross}} = t_1 + \left( \frac{x_{\text{gate}} - \text{lng}_1}{\text{lng}_2 - \text{lng}_1} \right) \times (t_2 - t_1)$$
 
-Because the median ping interval is $10.0\text{ seconds}$, the maximum interpolation span is bounded and yields sub-second precision without assumptions about arbitrary road geometry.
+Because the median ping interval is $10.0\text{ seconds}$, the maximum interpolation span is bounded and produces fractional-second estimates under linear interpolation; numeric resolution does not establish physical timing accuracy.
 
 ---
 
 ## 6. Traversal Validation & Invalidation Rules
 
-To ensure target labels represent unbroken, physically genuine journeys, candidate traversals must pass six validation filters:
+To ensure target labels represent unbroken, physically genuine journeys, the implemented checks and their limits are:
 
 1. **Chronological Gate Order**: $t_{\text{exit}} > t_{\text{entry}}$.
 2. **Trajectory Continuity**: Trajectory must not contain any sampling gap $\Delta t > 180\text{ seconds}$ between entry and exit.
-3. **Plausible Duration**: $1.0\text{ min} \le \text{travel\_time\_minutes} \le 30.0\text{ min}$ (equivalent to average speeds between $5.3\text{ km/h}$ and $158\text{ km/h}$).
-4. **Kinematic Bounds**: Implied velocity $v = \frac{\text{length\_km}}{\text{travel\_time\_hours}} \le 60.0\text{ km/h}$.
-5. **No Intermediate Reversals**: Longitude coordinates between entry and exit must advance monotonically in the designated travel direction.
-6. **Unique Traversal Association**: Multiple traversals by the same vehicle across the day are separated and uniquely indexed by entry timestamp.
+3. **Plausible Duration**: $1.0\text{ min} \le \text{travel\_time\_minutes} \le 45.0\text{ min}$ (combined with the separate speed bound below).
+4. **Kinematic Bounds**: Implied velocity $v = \frac{\text{length\_km}}{\text{travel\_time\_hours}} \le 70.0\text{ km/h}$.
+5. **Intermediate reversals (not enforced)**: Crossing direction is checked at each gate; the implementation does not require every internal ping to advance monotonically.
+6. **Traversal association**: Grouping uses vehicle and continuity subtrip. The extractor takes the first qualifying entry/exit pair per group; it does not enumerate every repeated loop in a continuous group.
 
 ---
 
@@ -142,12 +142,12 @@ To ensure target labels represent unbroken, physically genuine journeys, candida
 
 The segment definitions and gate mathematics have been implemented and tested:
 
-- **Configuration Module**: [`src/features/segment_config.py`](file:///C:/Users/Yashaswini%20Kanthraj/.gemini/antigravity/scratch/AI-Powered-Sustainable-Transportation-Advisor/src/features/segment_config.py)
+- **Configuration Module**: [`src/features/segment_config.py`](../src/features/segment_config.py)
   - `SpatialGate`: Dataclass encapsulating gate orientation, bounding box, and straddle detection.
   - `RoadSegment`: Dataclass encapsulating corridor metadata, distance, gates, and route associations.
   - `REGISTERED_SEGMENTS`: Registry catalog containing pre-verified segments for Outer Ring Road and MB Road.
-- **Global Config**: [`src/config.py`](file:///C:/Users/Yashaswini%20Kanthraj/.gemini/antigravity/scratch/AI-Powered-Sustainable-Transportation-Advisor/src/config.py)
-- **Unit Test Suite**: [`tests/test_segment_config.py`](file:///C:/Users/Yashaswini%20Kanthraj/.gemini/antigravity/scratch/AI-Powered-Sustainable-Transportation-Advisor/tests/test_segment_config.py)
+- **Global Config**: [`src/config.py`](../src/config.py)
+- **Unit Test Suite**: [`tests/test_segment_config.py`](../tests/test_segment_config.py)
   - 7 tests covering zero-distance, meridian distance, eastbound crossing, westbound crossing, reversal rejection, latitude envelope out-of-bounds rejection, and catalog lookup.
   - **Test Result**: `7 passed in 0.12s` (100% pass rate).
 

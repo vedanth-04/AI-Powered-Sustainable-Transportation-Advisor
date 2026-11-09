@@ -1,24 +1,24 @@
 # Trajectory Cleaning & Label Construction Report
 
-**Project:** AI-Powered Sustainable Transportation Advisor  
-**Phase:** Phase 3 Deliverable — Trajectory Cleaning & Target Label Construction  
-**Date:** October 2026  
-**Audited Database:** `data/raw/2019-07-01.db`  
-**Generated Dataset:** `data/processed/traversals.csv` (152 ground-truth traversals)  
-**Status:** **Completed & Verified** with 16 automated unit tests passing  
+**Project:** AI-Powered Sustainable Transportation Advisor<br>
+**Stage:** Phase 1 batch-pipeline labels (historically called internal Phase 3)<br>
+**Date:** October 2026<br>
+**Audited Database:** `data/raw/2019-07-01.db`<br>
+**Generated Dataset:** `data/processed/traversals.csv` (152 ground-truth traversals)<br>
+**Evidence:** Historical July 1 extraction and 16-test stage record; full current-suite status is in the [Phase 2 audit](phase2_submission_checklist.md).<br>
 
 ---
 
 ## 1. Executive Summary
 
-Phase 3 implements the core data processing and travel-time label generation pipeline. 
+Phase 3 implements the core data processing and travel-time label generation pipeline.
 
 Raw GPS pings from the Delhi bus AVL system are intermittent kinematic points ($\Delta t \approx 10\text{s}$). Arbitrary successive pings cannot be treated as segment travel times. This pipeline extracts ground-truth segment travel times by detecting verified physical vehicle traversals across spatial boundary gates defined in Phase 2.
 
 ### Pipeline Execution Summary
 
 ```text
-[Raw SQLite Data] 
+[Raw SQLite Data]
        │
        ▼
 1. Trajectory Cleaning (src/data/cleaner.py)
@@ -31,10 +31,10 @@ Raw GPS pings from the Delhi bus AVL system are intermittent kinematic points ($
        ▼
 2. Gate Crossing Detection & Interpolation (src/features/label_generation.py)
    ├── Entry gate straddle detection (direction-constrained)
-   ├── Linear crossing timestamp interpolation (sub-second precision)
+   ├── Linear crossing timestamp estimate (fractional-second numeric resolution)
    ├── Exit gate straddle detection (strictly after entry)
    ├── Internal continuity check (no intra-traversal gap > 180s)
-   └── Duration bounds validation (1.0 min ≤ duration ≤ 30.0 min, avg speed ≤ 70 km/h)
+   └── Duration bounds validation (1.0 min ≤ duration ≤ 45.0 min, avg speed ≤ 70 km/h)
        │
        ▼
 [data/processed/traversals.csv]
@@ -69,9 +69,9 @@ To prevent false or contaminated traversals from entering model training, candid
 | `MB_KHANPUR_TO_SAKET_WB` | 83 | 46 | 37 | 4 | **42** |
 | **Total** | **327** | **179** | **148** | **27** | **152** |
 
-### Explanations for Rejections:
+### Possible explanations for rejections (causes were not independently observed):
 1. **Rejected (No Exit)** ($148$ instances): A bus passed the entry gate but turned off the corridor before reaching the exit gate, terminated its trip, or took a depot layover. These incomplete journeys are safely discarded with zero target contamination.
-2. **Rejected (Gap $> 180\text{s}$)** ($27$ instances): A bus traversed the segment but experienced a cellular outage or extended stop $> 3\text{ minutes}$. These are dropped to avoid distorting the continuous moving travel time.
+2. **Rejected (Gap $> 180\text{s}$)** ($27$ instances): A bus traversed the segment but experienced a cellular outage or extended stop $> 3\text{ minutes}$. These are rejected for insufficient observation continuity. Riding time includes in-segment waiting; a missing GPS interval cannot distinguish a stop from a telemetry outage.
 
 ---
 
@@ -129,5 +129,5 @@ With 152 verified, unbroken segment traversals and ground-truth travel times der
 Features to be built (at the prediction moment $t_{\text{entry}}$):
 1. **Temporal & Schedule Features**: `entry_hour`, `minute_of_day`, `is_morning_rush` (08:00–11:00), `is_evening_rush` (17:00–20:00), `is_midday` (11:00–16:00).
 2. **Spatial & Network Features**: `segment_id`, `direction`, `segment_length_km`, `route_id`.
-3. **Approach Kinematics**: Implied speed in the approach buffer before entering the gate ($v_{\text{approach}}$).
+3. **Approach kinematics (proposal only)**: No valid pre-entry speed predictor is implemented; the target-derived alias was removed on October 16.
 4. **Leakage-Safe Historical Aggregates**: Rolling historical median travel time computed **strictly from past traversals** ($t_{\text{exit}} \le t_{\text{entry}}$).

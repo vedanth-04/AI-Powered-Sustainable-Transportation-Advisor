@@ -4,7 +4,7 @@ The deployed image demonstrates the approved historical Route 90 model. The comm
 
 ## Prerequisites
 
-Use Python 3.12 with the project's release/test dependencies installed. The existing development machine has this environment at `.venv`. For a fresh clone, create a Python 3.12 environment and install `requirements-ci.txt`; it includes the inference dependencies and the additional training/test tools. Run commands from the repository root. Docker is used for the already published API deployment; this model reproduction command runs in Python.
+Use Python 3.12 with an explicitly recorded test environment. Do not assume an existing `.venv` matches the original release. For a fresh clone, create a Python 3.12 environment and install `requirements-ci.txt`; it includes the inference dependencies and the additional training/test tools. Run commands from the repository root. Docker is used for the already published API deployment; this model reproduction command runs in Python.
 
 Supply the processed traversal CSV locally. The demonstrated input is `data/processed/phase2_cold_start/traversals.csv`, with 637 traversals and SHA-256 `243f568e1abc9d29e2fe9f665df36302a2aff61851438871de7ea4643dd5267b`. The data file is ignored by Git. A fresh clone needs the corresponding processed data from the project's data workflow before it can reproduce training. The committed historical reports are evidence of the earlier evaluation, and do not replace the input dataset.
 
@@ -98,3 +98,14 @@ The complete command passed on the existing 637-traversal input in `outputs/phas
 - An in-process prediction of 6.320402254818158 minutes, readiness success, and HTTP 422 for an unsupported route.
 
 The original registry database, serving bundle, deployment state, and published-release metadata were hash-checked before and after this reproduction and remained unchanged. The earlier 58-test PDF captures the preceding demonstration stage; this section records the subsequently expanded workflow tests.
+
+
+## November 9 validation qualification
+
+The processed 637-row CSV and original registry/artifact store are absent on the second laptop. Real-data reproduction was therefore not attempted; the approved image was preserved. The original 29-test quality snapshot and 58-test PDF precede the November 7 documented 80-test reproduction and the [November 9 audit](phase2_submission_checklist.md).
+
+Installing `requirements-ci.txt` in a new Windows environment failed on unavailable `anyio==4.16.0` from the configured index. The audit records actual alternative test environments and outcomes rather than silently changing the committed lock or claiming exact release parity. Existing tests train synthetic fixtures and isolated SQLite registries; they do not retrain the approved model.
+
+The complete November 9 existing suite ultimately passed **80 tests** after isolated MLflow/MLflow-skinny 3.1.4 and SQLAlchemy 2.0.57 installation. Earlier runs failed as recorded in the audit. Other development packages still differ from release pins; this is fixture verification, not exact release reproduction.
+
+**Environment limitation:** the final fixture suite passed, but `pip check` on the mixed test environment still failed (missing greenlet and MLflow constraints on pandas, pyarrow, cachetools, importlib-metadata and packaging). Do not use this mixed environment to approve or retrain a real release. The running Linux image independently passed its lock comparison and `pip check`. Full logs and exact versions are recorded in the sanitized validation JSON.

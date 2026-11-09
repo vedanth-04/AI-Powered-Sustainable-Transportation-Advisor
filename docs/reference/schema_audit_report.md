@@ -1,9 +1,11 @@
 # Dataset Access, Provenance, and Empirical Schema Audit Report
 
-**Project:** AI-Powered Sustainable Transportation Advisor  
-**Phase:** Phase 2 — Dataset Acquisition & Empirical Schema Audit  
-**Date:** October 2026  
-**Status:** **Completed & Empirically Verified** on representative daily database `2019-07-01.db`  
+> Historical Phase 1 reference retained for context. Internal phase numbers and planned filenames describe the earlier stage; use the [project chronology](../summaries/pipeline_overview.md) and [current audit](../phase2_submission_checklist.md) for present status. DVC was subsequently initialized in `8d557b5` and team storage configured in `5250d9c`; the pre-initialization passage below is historical.
+
+**Project:** AI-Powered Sustainable Transportation Advisor<br>
+**Phase:** Phase 2 — Dataset Acquisition & Empirical Schema Audit<br>
+**Date:** October 2026<br>
+**Status:** **Completed & Empirically Verified** on representative daily database `2019-07-01.db`<br>
 
 ---
 
@@ -117,9 +119,9 @@ India Standard Time (IST) is strictly fixed at UTC+05:30 ($19,800\text{ seconds}
 
 From the empirical audit, four key quality issues were measured:
 
-1. **Duplicate Pings:** **73,034 duplicate `(vehicle_id, timestamp)` pairs** were detected (3.69% of records). These occur when telemetry devices retransmit identical packets over noisy GSM links.  
+1. **Duplicate Pings:** **73,034 duplicate `(vehicle_id, timestamp)` pairs** were detected (3.69% of records). These occur when telemetry devices retransmit identical packets over noisy GSM links.<br>
    *Remediation:* Drop duplicate `(vehicle_id, timestamp)` records before sorting trajectories.
-2. **Floating-point Route IDs:** `route_id` values like `45.0` cause dictionary lookup failures if matched against integer route codes.  
+2. **Floating-point Route IDs:** `route_id` values like `45.0` cause dictionary lookup failures if matched against integer route codes.<br>
    *Remediation:* Normalize `route_id` by casting float $\to$ int $\to$ string (`str(int(float(x)))`).
 3. **Coordinate Storage Type:** Coordinates stored as text require explicit casting: `CAST(lat AS REAL)`, `CAST(lng AS REAL)`.
 4. **The Consecutive Ping Trap:** An elapsed time between successive pings is **not** a travel time. A bus stuck at a signal or depot may log successive pings 15 minutes apart with zero spatial displacement. True segment travel times will be derived exclusively via boundary line crossing events in Phase 3.

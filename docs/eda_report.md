@@ -1,106 +1,50 @@
-# Exploratory Data Analysis Report
-## AI-Powered Sustainable Transportation Advisor
+# Exploratory data analysis: verified daily sample
 
-**Dataset:** Delhi Bus AVL GPS Data — July 1, 2019  
-**Records:** 1,977,922 GPS observations  
-**Source:** Zenodo (DOI: 10.5281/zenodo.21738157)
+Dataset: Delhi bus GPS, `data/raw/2019-07-01.db`, from the [Zenodo archive](https://zenodo.org/records/21738157/files/july_19_corrected.zip?download=1). This overview corrects abbreviated counts/generalizations that conflicted with the original notebook and [fleet-wide audit](reference/eda_audit_report.md). Read-only SQL and hashes were rechecked on November 9, 2026; [sanitized evidence](results/2026-11-09-validation/summary.json).
 
----
+## 1. Inventory and completeness
 
-## 1. Dataset Scale
+| Metric | Verified value |
+|---|---:|
+| Raw observations | 1,977,922 |
+| Distinct vehicle IDs | 1,547 |
+| Distinct route IDs | 476 |
+| Distinct trip IDs | 5,194 |
+| File size | 193,421,312 bytes |
+| Missing/null/blank values | 0 in each of all nine columns |
+| Duplicate vehicle/timestamp keys | 73,034 |
+| Observations after key deduplication | 1,904,888 |
 
-| Metric | Value |
-|--------|-------|
-| Total GPS Records | 1,977,922 |
-| Distinct Vehicles | 816 buses |
-| Distinct Routes | 193 routes |
-| Distinct Trips | 8,327 trips |
-| Time Span | Full day (July 1, 2019) |
-| Database Size | ~184 MB (SQLite) |
+SQLite integrity returned `ok`. Epoch range is `1561939200` through `1562025599`: July 1 00:00:00–23:59:59 UTC, spanning July 1 05:30 to July 2 05:29:59 IST. A daily archive does not prove complete network/service coverage. The former 816-bus/193-route/8,327-trip summary and claim of null trip IDs are superseded by these queries.
 
-The data covers Delhi's entire public bus network for one complete day of operations.
+## 2. Temporal and data-quality findings
 
----
+The notebooks investigate sampling intervals, collection-time delay and trajectory traces. The historical fleet audit reports a ten-second median sampling interval, wider fleet-wide gaps than the Route 90 subset, and 22,828 gaps over 300 seconds within a vehicle/trip pair. These detailed interval statistics were not recomputed in the November inventory check.
 
-## 2. Data Quality Assessment
+The approximately 13-second collection delay in the EDA is a Route 90 observation, not a measured universal network delay. Use onboard epoch `timestamp` for crossing time and convert to IST for time features. A gap can reflect waiting, an outage or other causes; the data alone does not establish why it occurred.
 
-### Duplicate Records
-- **73,034 duplicate** `(vehicle_id, timestamp)` pairs found
-- **Zero coordinate conflicts** among duplicates — safe for automatic deduplication
-- After deduplication: **1,904,888 unique observations**
+Current cleaning deduplicates vehicle/timestamp keys, filters Delhi coordinate bounds, removes implausible displacement speeds over 80 km/h for adjacent pings up to 60 seconds apart, and starts a new continuity subtrip at gaps over 300 seconds. Label extraction has stricter crossing and within-segment gap bounds. [Label report](label_construction_report.md).
 
-### Missing Values
-- Core GPS fields (`vehicle_id`, `lat`, `lng`, `timestamp`) have **zero missing values**
-- `trip_id` has some nulls (expected — buses between assigned trips)
+## 3. Speed and route coverage
 
-### Coordinate Validity
-- All GPS coordinates fall within expected Delhi boundaries (28.3°–28.9°N, 76.8°–77.5°E)
-- No out-of-bounds anomalies detected
+November 9 SQL found 662,614 zero-speed rows (**33.50%**) and 22 distinct reported speed values, with maximum about 5.833333. The prior audit interprets this as m/s (about 21 km/h). This observed quantization/ceiling does not prove a specific device defect or firmware mechanism. Zero reported speed alone is not a reason to discard real bus-stop/signal waiting.
 
----
+The historical audit found no Route 90 jumps above 100 km/h but seven above 80 km/h; "zero jumps" without a threshold is incorrect. It also reports larger outliers on Route 399. GPS displacement speed is an estimate subject to location error, not automatically true speed. Neither raw speed nor completed-traversal speed is in the current 12 model inputs.
 
-## 3. Temporal Patterns
+Top raw route groups rechecked on November 9:
 
-### GPS Sampling Interval
-- **Median interval: ~10 seconds** between consecutive pings per bus
-- Route 90 buses have denser sampling than fleet average
-- 22,828 gaps >5 minutes within same trip (indicate bus stops, terminal waits, or signal loss)
+| Dataset route ID | Observations | Vehicle IDs | Trip IDs |
+|---|---:|---:|---:|
+| 90 | 35,446 | 39 | 39 |
+| 399 | 33,814 | 37 | 36 |
+| 398 | 32,967 | 36 | 36 |
+| 83 | 32,565 | 37 | 37 |
+| 164 | 20,845 | 28 | 28 |
 
-### Server Transmission Delay
-- **Median delay: ~13 seconds** between onboard clock and server reception
-- Maximum delay: up to **3 minutes**
-- **Decision:** Use onboard `timestamp` (UTC epoch) for all trajectory calculations, not server `time`
+The original study reports extensive vehicle route switching. That supports continuity checks; it does not establish the cause of each reassignment. The implemented catalog contains ORR and MB Road in both directions. Geographic landmark and timetable mapping still need independent validation before a journey-planning claim.
 
----
+## 4. What EDA establishes
 
-## 4. Speed & Movement Characteristics
+EDA supports selecting dense candidate corridors and defining quality rules. It does not establish that two million pings are two million independent training labels: the historical July 1 extraction produced only 152 valid gate traversals. The Phase 2 release is separately evaluated on a documented 637-row processed input and serves only the approved historical Route 90 pair.
 
-### Reported Speed
-- Speed field is in **m/s** (multiply by 3.6 for km/h)
-- Maximum recorded speed: **21 km/h** (speed field is capped — only 22 discrete values)
-- **56% of pings** are at zero speed (buses stopped at signals, stations)
-
-### Fleet-Wide GPS Jump Analysis
-- Route 399 shows GPS jumps up to **338.5 km/h** implied speed (erroneous GPS readings)
-- Route 90 shows **zero GPS jumps** — naturally cleaner corridor
-- **Decision:** Apply 80 km/h speed threshold filter during data cleaning
-
----
-
-## 5. Route Corridor Analysis
-
-### Top Routes by Volume
-
-| Route | GPS Pings | Buses | Trips |
-|-------|-----------|-------|-------|
-| Route 90 | Highest | 15+ | 40+ |
-| Route 534 | High | 10+ | 30+ |
-| Route 399 | High | 10+ | 30+ |
-
-### Multi-Route Bus Behavior
-- **94.6% of buses** operate on multiple routes during the day
-- This is expected for Delhi's operational model (buses reassigned between shifts)
-
-### Selected Corridors
-1. **Route 90/83** — Outer Ring Road (ORR), East-West paired directions
-2. **Route 398/399** — MB Road, East-West paired directions
-
-These corridors were selected for:
-- High GPS ping density → more training samples
-- Clear linear geometry → well-defined spatial gates
-- Paired directions → both eastbound and westbound traversals
-
----
-
-## 6. Key Decisions for ML Pipeline
-
-| EDA Finding | Pipeline Decision |
-|-------------|------------------|
-| ~2M records, 816 buses | Sufficient data for ML training |
-| 73K safe duplicates | Deduplicate in preprocessing |
-| 10s sampling interval | Dense enough for trajectory reconstruction |
-| Server delay up to 3 min | Use onboard timestamp only |
-| 21 km/h speed cap | Speed is approximate; use as feature, not target |
-| GPS jumps on some routes | Apply 80 km/h implied-speed filter |
-| Route 90 cleanest corridor | Primary prediction target |
-| 94.6% multi-route buses | Track by vehicle_id, not route assignment |
+Full-month totals in the Phase 1 presentation were not reproduced from this daily sample. Preserve [source/usage terms](reference/schema_audit_report.md), [notebooks](../notebooks/01_dataset_schema_and_integrity_audit.ipynb), [fleet audit](reference/eda_audit_report.md) and the [project chronology](summaries/pipeline_overview.md) when explaining what was measured, inherited or remains unverified.

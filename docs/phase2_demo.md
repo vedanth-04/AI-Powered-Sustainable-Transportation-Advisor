@@ -80,11 +80,11 @@ docker version
 docker compose version
 ```
 
-On the existing development machine, use the prepared Python environment:
+For a new deployment use Python 3.12 below. If this Compose project is already running, use its existing state directory; the November 9 laptop uses the custom path in [section 12](#12-november-9-laptop-verification-and-faculty-sequence).
 
 ```powershell
-.\.venv\Scripts\python.exe -m scripts.deploy_api --port 8001
-.\.venv\Scripts\python.exe -m scripts.verify_deployment
+py -3.12 -m scripts.deploy_api --port 8001
+py -3.12 -m scripts.verify_deployment
 ```
 
 The deploy command pulls the pinned image, starts the dedicated Compose service, waits for readiness, checks the approved prediction and unsupported-route rejection, and records the active release in `outputs/phase2_deploy/state.json`. Running it again with the same release is supported. If an activated update fails its checks, the helper attempts to restore and verify the preceding active release. The failure/recovery paths have automated tests in `tests/test_deploy.py`.
@@ -114,24 +114,26 @@ Use the development environment with test dependencies installed:
 ```powershell
 New-Item -ItemType Directory -Force outputs/phase2_demo | Out-Null
 .\.venv\Scripts\python.exe -m pytest tests -q --junitxml=outputs/phase2_demo/pytest.xml
-Get-Content outputs/phase2_release_check/quality_report.json
-Get-Content outputs/phase2_release_check/registration.json
+Get-Content docs/results/phase2-v1/quality_report.json
+Get-Content docs/results/phase2-v1/registration.json
 ```
+
+On the November 9 laptop, the original virtual environment deliberately remains unchanged and does not have pytest. Show the actual 80-test run in outputs/local_setup/project-audit-20261109-132719/pytest-final.xml and pytest-final.log. The final mixed test environment passes fixtures but still fails pip check; it is not a release-approval environment.
 
 Show the latest test result separately from the earlier 29-test release-quality record. Explain one date-split/feature test, one API validation test, and one failed-deployment recovery test. This connects the tests to model reliability and deployment behavior.
 
-The `outputs` directory contains generated local evidence and is ignored by Git. A new clone includes the historical approval snapshots linked in section 3. It does not include this development machine's original output folder, training data, MLflow database, or local artifact store. Keep those files for the original project demonstration. The snapshots document the existing approval; the exporter consumes the original local reports. Recreating the full approval and registration from a fresh clone requires the data/artifacts and additional quality-gate/registration orchestration, which is not currently provided as a single repository command.
-
-**Reproduction update, 7 November 2026:** A [single-command model approval workflow](phase2_reproduction.md) is now provided. With the processed traversal data and Python 3.12 test environment available, it repeats tests, training, quality checks, registration, bundle export, and an in-process API check in a new directory. The paragraph above records the earlier implementation gap. The deployed v1 image and its historical approval records remain separate from each reproduction run.
+The `outputs` directory is ignored and machine-specific. New clones include historical quality/registry snapshots, not the original training data or MLflow database. The [single-command reproduction workflow](phase2_reproduction.md) has existed since November 7; it still requires the 637-row processed input. Do not retrain for a classroom serving check. The original v1 snapshot predates the current approval schema and cannot be passed unchanged to the current registrar.
 
 ## 6. Open the correct MLflow registry
 
-On the original development machine, start MLflow against the Phase 2 SQLite database. A plain `mlflow ui` can open a different default store.
+Only on a machine that actually has the original registry and artifacts, start MLflow against the Phase 2 SQLite database. A plain `mlflow ui` can open a different default store.
 
 ```powershell
 $registryPath = (Resolve-Path outputs/phase2_registry/tracking.db).Path.Replace('\', '/')
 .\.venv\Scripts\mlflow.exe ui --backend-store-uri "sqlite:///$registryPath" --host 127.0.0.1 --port 5000
 ```
+
+This database is absent on the November 9 laptop. Use the committed registry/quality snapshots and the historical PDF screenshot there; do not present a new empty database as the original registry. Fixture-based registry tests are a separate executable demonstration.
 
 Keep this terminal running and open [MLflow](http://127.0.0.1:5000). Show the recorded cold-start model runs and their metrics. Open **Models**, then **BusTravelTimePredictor**, version **1**. Check the linked training run against `66c819ceb83740c18d05800213524441`, and show the registered artifact/checksum metadata.
 
@@ -158,7 +160,7 @@ The current release image targets **Linux/amd64**, suitable for the project's x6
 Install Git, Python 3.12, and Docker Desktop. Enable WSL 2 and Linux containers on Windows, then start Docker Desktop.
 
 ```powershell
-git clone --branch phase2/model-quality https://github.com/vedanth-04/AI-Powered-Sustainable-Transportation-Advisor.git
+git clone https://github.com/vedanth-04/AI-Powered-Sustainable-Transportation-Advisor.git
 cd AI-Powered-Sustainable-Transportation-Advisor
 py -3.12 --version
 docker version
@@ -217,3 +219,52 @@ python -m scripts.build_demo_report
 ```
 
 ReportLab is a document-generation dependency. The inference container and standard-library deployment helpers keep their existing dependencies. The report generator reads existing evidence and does not execute tests or collect fresh observations. It needs `deployment_check.json`, `registry_check.json`, `ci_run.json`, and `pytest.xml` in `outputs/phase2_demo`, plus the historical approval snapshots. Screenshots are read from `outputs/phase2_demo/screenshots`: `api_health.jpg`, `api_prediction.jpg`, `api_rejection.jpg`, `mlflow_registry.jpg`, `docker_container.png`, `github_ci.jpg`, and `github_release.jpg`. A missing screenshot is explicitly marked in the generated report. Inspect a regenerated PDF before presenting it.
+
+
+## 12. November 9 laptop verification and faculty sequence
+
+Vedanth completed the local Docker setup and verification on November 9, 2026, after safely updating `main` to `2358995`. This is distinct from the implementation commits authored as `Vikasyk` in Git and from the November 6-7 historical evaluation. [Tracked sanitized record](results/2026-11-09-validation/summary.json); raw, preserved evidence remains in ignored `outputs/local_setup/verification-20261109-131834/`.
+
+Observed: Docker Desktop 4.99.0, Engine 29.9.3 Linux/amd64, Compose 5.7.0; healthy container; approved GB v1 artifact hash; `cold_start_v1`; eight deployment checks passed; real prediction `6.320402254818158` minutes; unsupported requests returned 422. No interactive GHCR login was needed during that pull; anonymous package access was not established. This is localhost inference, not public production deployment.
+
+The container was left running. To verify it without redeploying or overwriting earlier evidence, from the repository root:
+
+```powershell
+# Only if Docker is not already on PATH (per-user installation):
+$dockerBin = Join-Path $env:LOCALAPPDATA 'Programs\DockerDesktop\resources\bin'
+if (Test-Path $dockerBin) { $env:PATH = "$dockerBin;$env:PATH" }
+$stateFile = 'outputs/local_setup/verification-20261109-131834/deployment_state/state.json'
+$checkFile = 'outputs/local_setup/deployment-check-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff') + '.json'
+py -3.12 -m scripts.verify_deployment --state-file $stateFile --output $checkFile
+py -3.12 -m scripts.smoke_api --base-url http://127.0.0.1:8001 --model-version 1 --expected-minutes 6.320402254818158
+Invoke-RestMethod http://127.0.0.1:8001/health
+```
+
+Do not run the default deployment command against this existing Compose project: its state is intentionally isolated. If a redeploy is necessary, keep the same state directory with `--state-dir outputs/local_setup/verification-20261109-131834/deployment_state`. A fresh clone on another PC should use section 8 instead.
+
+### Faculty walkthrough (about 10 minutes)
+
+1. **Problem and scope:** show the README and Phase 1 slides. Explain multimodal planning as the proposed product; today's model predicts one segment's riding time, excluding access, waiting and transfers.
+2. **History and data:** open the [chronology](summaries/pipeline_overview.md), DVC pointer and corrected EDA. Show `git log --date=short --format="%h %ad %an %s"`; verify the sample with `Get-FileHash data/raw/2019-07-01.db -Algorithm MD5`. Do not expose local DVC credentials.
+3. **Labels and model comparison:** show entry/exit gate code, 12 inputs and the [corrected Phase 1 CSV](results/2026-10-16-corrected/model_comparison.csv). Explain why the older 0.62-minute score is superseded. Then show the separate Phase 2 quality/registry snapshots and cold-start policy. Selection used validation MAE; historical test accuracy is not current-traffic accuracy.
+4. **Tests and registry:** show the actual November 9 result (80 passed, 61 warnings after isolated dependency alignment, with earlier failed runs retained) and dependency qualifications in the [audit](phase2_submission_checklist.md). Feature parity, cutoff, tampering and temporary-registry fixtures exercise the workflow. Use the original MLflow UI only if its original database exists; otherwise label the [PDF](../output/pdf/Phase_2_Demonstration_Evidence.pdf) registry screenshot as historical evidence.
+5. **Live serving:** use the existing-instance verifier/smoke commands above; show Docker Desktop and [Swagger](http://127.0.0.1:8001/docs). Submit the section 4 payload, show model v1, policy and minutes, then change the route to `999` to obtain HTTP 422. A response is a serving check, not an MAE measurement.
+6. **Delivery and limits:** open [CI for the inspected main snapshot](https://github.com/vedanth-04/AI-Powered-Sustainable-Transportation-Advisor/actions/runs/42342969930), [v1 image release](https://github.com/vedanth-04/AI-Powered-Sustainable-Transportation-Advisor/actions/runs/42330318360), and the pinned digest. Explain synthetic CI (6.25) versus the approved real model (6.3204). Show the remaining guide gaps; no protected VM deployment or new production model was performed.
+
+Keep the original PDF's 58-test screenshot, the November 7 documented 80-test reproduction, and November 9's actual suite outcome separate. For the complete requirement status, including failures and blocked reproduction, use the [audit checklist](phase2_submission_checklist.md).
+
+## 13. Alternative source-image build (separate from the faculty serving check)
+
+The original README's source-build procedure is retained here for a machine with an approved export and compatible Python environment. This is not required to run the published image, and it was not executed during the November 9 audit. The original reports, registry and exported bundle are absent on the second laptop; the sanitized committed registry snapshot is not an exporter input.
+
+When the original approved reports and registry are available, `python -m src.models.export_serving_bundle` checks them and exports to `outputs/phase2_serving`. Only after verifying the approved bundle exists, a source-image check can use:
+
+```powershell
+Get-FileHash outputs/phase2_serving/model.joblib -Algorithm SHA256
+docker build --platform linux/amd64 --tag bus-travel-time:phase2-local .
+docker run --rm --name bus-travel-time-source-demo --publish 127.0.0.1:8002:8000 bus-travel-time:phase2-local
+# From another terminal, while the foreground container is running:
+Invoke-RestMethod http://127.0.0.1:8002/health
+```
+
+Compare the model hash to the approved value in section 3 and verify the manifest before building. Use an available port; port 8002 in this example keeps the established 8001 deployment separate. Use Ctrl+C to stop this optional foreground container. Do not generate the synthetic CI bundle for a real-model demonstration, overwrite the approved export, upload release secrets, or recreate the existing `phase2-image-v1` tag as part of routine verification.

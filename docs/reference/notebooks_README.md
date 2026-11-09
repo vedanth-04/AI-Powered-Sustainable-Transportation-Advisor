@@ -1,5 +1,7 @@
 # Notebooks Directory
 
+> Historical Phase 1 reference retained for context. Internal phase numbers and planned filenames describe the earlier stage; use the [project chronology](../summaries/pipeline_overview.md) and [current audit](../phase2_submission_checklist.md) for present status.
+
 This folder contains Jupyter notebooks used for exploratory data analysis (EDA), data audit investigations, feature exploration, and initial modeling prototypes.
 
 ## Notebook Conventions & Workflow
