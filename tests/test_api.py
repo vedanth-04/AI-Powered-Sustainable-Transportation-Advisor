@@ -160,3 +160,53 @@ def test_rejects_invalid_or_unsupported_requests(model_bundle, override):
         response = client.post("/predict/bus", json={**REQUEST, **override})
 
     assert response.status_code == 422
+
+
+@pytest.mark.parametrize('value', [None, [], [1, 2], [[1]], ['bad'], [float('nan')], [float('inf')], [0], [-1]])
+def test_invalid_prediction_results_are_controlled_503(model_bundle, monkeypatch, value):
+    bundle_dir, _ = model_bundle
+    with TestClient(create_app(bundle_dir)) as client:
+        monkeypatch.setattr(client.app.state.bundle.model, 'predict', lambda frame: value)
+        response = client.post('/predict/bus', json=REQUEST)
+        assert response.status_code == 503
+        assert client.get('/health').status_code == 200  # Loaded-model readiness contract unchanged.
+
+
+def test_prediction_exception_and_logs_do_not_expose_sensitive_text(model_bundle, monkeypatch, caplog):
+    import logging
+    directory, _ = model_bundle
+    with TestClient(create_app(directory)) as client, caplog.at_level(logging.INFO, logger='src.api.main'):
+        def broken(frame):
+            raise RuntimeError('credential=do-not-log-this')
+        monkeypatch.setattr(client.app.state.bundle.model, 'predict', broken)
+        response = client.post('/predict/bus?secret=hidden', json=REQUEST,
+                               headers={'X-Request-ID': 'faculty-demo-1', 'Authorization': 'secret-header'})
+    assert response.status_code == 503
+    assert response.headers['x-request-id'] == 'faculty-demo-1'
+    events = [json.loads(r.message) for r in caplog.records if r.name == 'src.api.main']
+    failure = next(e for e in events if e['event'] == 'inference_failure')
+    request = next(e for e in events if e['event'] == 'http_request')
+    assert failure['request_id'] == request['request_id'] == 'faculty-demo-1'
+    assert request['status'] == 503 and request['latency_ms'] >= 0
+    assert request['model_version'] == 1 and request['history_policy'] == 'cold_start_v1'
+    assert request['route_id'] == '90' and request['segment_id'] == REQUEST['segment_id']
+    assert not any(secret in caplog.text for secret in ('do-not-log-this', 'secret-header', 'secret=hidden', REQUEST['entry_at']))
+
+
+@pytest.mark.parametrize('payload', [{}, None, [], {'route_id': None}, {**REQUEST, 'entry_at': 'invalid'}, {**REQUEST, 'entry_at': '0001-01-01T00:00:00+00:00'}])
+def test_malformed_requests_remain_422(model_bundle, payload):
+    directory, _ = model_bundle
+    with TestClient(create_app(directory)) as client:
+        response = client.post('/predict/bus', content=json.dumps(payload), headers={'Content-Type': 'application/json'})
+        assert response.status_code == 422
+        assert response.headers['x-request-id']
+
+
+def test_openapi_example_is_executable_and_invalid_request_id_is_replaced(model_bundle):
+    directory, _ = model_bundle
+    with TestClient(create_app(directory)) as client:
+        assert client.get('/docs').status_code == 200
+        example = client.get('/openapi.json').json()['components']['schemas']['BusPredictionRequest']['examples'][0]
+        response = client.post('/predict/bus', json=example, headers={'X-Request-ID': 'untrusted ' * 30})
+        assert response.status_code == 200
+        assert len(response.headers['x-request-id']) == 32
