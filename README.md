@@ -1,5 +1,7 @@
 # AI-Powered Sustainable Transportation Advisor
 
+**Faculty presentation:** [Phase 2 — implementation, architecture and verified results](docs/PHASE2_PRESENTATION.md).
+
 Predict Delhi bus **segment riding time in minutes** from GPS-derived historical traversals. The broader proposed advisor will compare journey time, cost and estimated emissions; multimodal routing, fares, waiting/transfer estimates and a journey UI remain future milestones.
 
 **Current demo:** Gradient Boosting `BusTravelTimePredictor` v1, `cold_start_v1`, historical Route `90` on `ORR_CHIRAG_TO_NEHRU_PLACE_EB`. This is a local Docker demonstration, not a public production transport service. Other route/segment pairs return HTTP 422.
