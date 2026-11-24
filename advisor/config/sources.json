@@ -1,0 +1,69 @@
+{
+  "_comment": "Pinned public Delhi transit datasets. Files land in data/raw/transit/<dataset>/ (git-ignored). scripts/advisor_fetch_data.py downloads and verifies every sha256 below; nothing is synthetic.",
+  "datasets": {
+    "otd_bus": {
+      "title": "Delhi bus static GTFS (DTC + DIMTS cluster buses)",
+      "publisher": "Open Transit Data Delhi (otd.delhi.gov.in), Transport Dept., GNCTD with IIIT-Delhi",
+      "official_page": "https://otd.delhi.gov.in/data/static/",
+      "mirror": "github.com/ethanc8/delhi-gtfs @ ce9586990a5474f3e4e02b876823fc4cd058e1db (byte copy of OTD GTFS.zip; the mirror only extended calendar.txt end_date)",
+      "vintage": "OTD release of June 2024",
+      "notes": "OTD states the stop_times arrival/departure values are rough estimates generated assuming a constant travel speed. Fares come from the feed's fare_rules/fare_attributes (official stage fares).",
+      "base_url": "https://media.githubusercontent.com/media/ethanc8/delhi-gtfs/ce9586990a5474f3e4e02b876823fc4cd058e1db/bus/",
+      "files": {
+        "agency.txt": "93b36643eb9932dfcfa0aa614033d8b39a71e35852c6234a65dfaa21633d0fea",
+        "calendar.txt": "06a690da9679e1bbb97bd07f4fc9741b800b3f7575eaab8f17bd0dc6257f6277",
+        "routes.txt": "b95858babf1e32ede0d309df3e9f135f927babd8ec55aa22fc953e39c92a50f8",
+        "stops.txt": "032949ff77483f3f83ec382a3e384c1fedec8c5bc16404659c1a938b98775ff9",
+        "trips.txt": "f3f72927bf7ef3c098ff18c6ce96d053677e765d5f57e08ee5393455ece623f0",
+        "stop_times.txt": "04ac2d1fba624025c36f87329888617d565a04fa0525c9998cd4add3b8ebf56b",
+        "fare_rules.txt": "cb9723f1fae73c69f3408fc4c4964e6394cfc1c85237c2c39439a4ac407b0ad3",
+        "fare_attributes.txt": "701e8dec44441fd80652d9fac00a044d460efdece77fe8f93dcd4358fbc16f25"
+      }
+    },
+    "dmrc": {
+      "title": "Delhi Metro static GTFS (DMRC)",
+      "publisher": "Open Transit Data Delhi (otd.delhi.gov.in/data/staticDMRC/)",
+      "official_page": "https://otd.delhi.gov.in/data/staticDMRC/",
+      "mirror": "github.com/KunalK0a2/Delhi_Metro_Route_Planner @ adc43e1d83e1619a42790e692ef3752b31b67eee (stop_times/stops/shapes are byte-identical to the OTD copy in ethanc8/delhi-gtfs)",
+      "vintage": "OTD release of 10 Aug 2023 (262 stations, 36 route patterns)",
+      "notes": "Times are DMRC's approximate schedule. The feed holds weekday trips and only a few Saturday trips and no Sunday service; on weekends the advisor uses the weekday timetable and says so.",
+      "base_url": "https://raw.githubusercontent.com/KunalK0a2/Delhi_Metro_Route_Planner/adc43e1d83e1619a42790e692ef3752b31b67eee/dmrc_gtfs/",
+      "files": {
+        "agency.txt": "a7549f538ad4cf9a920538a7659f3fc9c8a047bd437473aad43568c3c6f39d93",
+        "calendar.txt": "c440d5e10e7235d812072beae894e65fe1e77189acb46fcb46a3707af9de1000",
+        "routes.txt": "427d55d7eab48d0f156ab2a6076b0f7e70644b0e12e0e1b8d72e48d2fd4a1f81",
+        "stops.txt": "4244818035ec8dce840255f596da2f3a66a73bf0027eedbe5258631e60852f76",
+        "trips.txt": "3f686ff92cd15960423f5ba21e4a5ece31f9cd0780d7e321ccdaa2c08a3be8ea",
+        "stop_times.txt": "75344feaee539a0bfe23d068a875e74e8309068fb30f1096bb06b59f712bd527",
+        "shapes.txt": "8e48be32e43dcdb25aa0c127688fb225f1e1e448e710ecd7d4a38d08fcddd76c"
+      }
+    },
+    "rail": {
+      "title": "Indian Railways stations, trains and schedules (filtered to passenger/MEMU trains inside Delhi)",
+      "publisher": "DataMeet community (github.com/datameet/railways), compiled from Indian Railways enquiry data",
+      "official_page": "https://github.com/datameet/railways",
+      "mirror": "github.com/datameet/railways @ e0c538a1e41ae5eace454d2818902e1065608e16",
+      "vintage": "Compiled 2016; Northern Railway has re-timed and re-numbered some passenger/MEMU services since",
+      "notes": "Running days are not in the dataset, so trains are treated as daily. Only Pass/MEMU/DEMU/EMU trains and only consecutive stops inside the Delhi service area are used.",
+      "base_url": "https://raw.githubusercontent.com/datameet/railways/e0c538a1e41ae5eace454d2818902e1065608e16/",
+      "files": {
+        "stations.json": "9bd5e1da3a859e5359a95f40b6009aa468efb177da4faac57ffdcd7daeb4df18",
+        "trains.json": "e434d9c56016ccdf2291ccd446586ef87a7fab101084efa5f68871ab27800167",
+        "schedules.json": "105d63816acb177eac30a7d156eb2d312625a42ddebd273edee810d2989878ec"
+      }
+    },
+    "places": {
+      "title": "Delhi boundary and municipal ward localities",
+      "publisher": "DataMeet Municipal Spatial Data (github.com/datameet/Municipal_Spatial_Data), scraped from the Delhi ward map on ArcGIS Online; CC BY-SA 2.5 India",
+      "official_page": "https://github.com/datameet/Municipal_Spatial_Data/tree/master/Delhi",
+      "mirror": "github.com/datameet/Municipal_Spatial_Data @ 9b4d1c2ece54cdeb6f5e8bad9ccad7844f783b17",
+      "vintage": "Ward boundaries as published in the repository (updated Nov 2023)",
+      "notes": "The NCT boundary decides which start/end points are accepted. 270+ ward names are offline place names (e.g. Lajpat Nagar, Karol Bagh). Other addresses and landmarks come from OpenStreetMap through the online geocoder when the server has internet.",
+      "base_url": "https://raw.githubusercontent.com/datameet/Municipal_Spatial_Data/9b4d1c2ece54cdeb6f5e8bad9ccad7844f783b17/Delhi/",
+      "files": {
+        "Delhi_Boundary.geojson": "efe9b90986441de75a4310ab140d0cd334f9700b6abca304f47ad4c488409638",
+        "Delhi_Wards.geojson": "f331e967962383127eae891c01ed3f3762f2b029feb892641f2466787b3bed55"
+      }
+    }
+  }
+}

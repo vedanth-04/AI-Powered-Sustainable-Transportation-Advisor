@@ -1,0 +1,29 @@
+{
+  "policy_version": 1,
+  "description": "A retrained model is only a candidate. It replaces the serving champion only when every check below passes; otherwise the champion keeps serving.",
+  "retraining_window": {
+    "rule": "All complete labelled service days before the promotion holdout day. Partial days are excluded so every hour of the day is represented equally.",
+    "promotion_holdout_start_ist": "2019-07-08"
+  },
+  "data_validation": {
+    "required_columns": ["segment_id", "route_id", "direction", "segment_length_km", "t_entry", "t_exit", "travel_time_minutes"],
+    "min_travel_time_minutes": 1.0,
+    "max_travel_time_minutes": 45.0,
+    "duration_tolerance_minutes": 0.05,
+    "service_hours": [5, 23],
+    "min_rows": 200
+  },
+  "promotion": {
+    "min_relative_mae_improvement": 0.03,
+    "max_segment_mae_regression": 0.10,
+    "require_beats_median_baseline": true,
+    "require_same_feature_schema": true,
+    "require_reload_parity": true,
+    "reload_tolerance_minutes": 1e-9
+  },
+  "aliases": {
+    "champion": "The version the API should serve.",
+    "previous": "The last champion, kept ready for one-step rollback."
+  },
+  "approvers": "Promotion and rollback record the acting team member; a second team member reviews the lifecycle report before any new image is published (see docs/PHASE3_GOVERNANCE.md)."
+}

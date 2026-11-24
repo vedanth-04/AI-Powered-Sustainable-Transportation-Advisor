@@ -1,0 +1,437 @@
+{
+  "generated_at": "2026-11-21T10:58:35+05:30",
+  "kind": "historical_replay_and_lifecycle",
+  "model_v1_source": "approved_bundle",
+  "model_v1_sha256": "b26d1a45f8e97278b8be70eef9c6c88e39b7d52537d55bea6a206b3391934a88",
+  "inputs": {
+    "traversals_sha256": "243f568e1abc9d29e2fe9f665df36302a2aff61851438871de7ea4643dd5267b",
+    "policy_sha256": "04e3d53b0c04c2dc683e767849e1b7c828d02db24e68d87f0908fee0a5809644",
+    "policy_version": 1
+  },
+  "approved_validation_mae": 2.4739467045209045,
+  "scenarios": {
+    "natural": {
+      "alerts_by_type": {
+        "prediction_drift": {
+          "WARN": 1,
+          "ALERT": 0
+        },
+        "input_drift": {
+          "WARN": 2,
+          "ALERT": 0
+        },
+        "performance": {
+          "WARN": 1,
+          "ALERT": 2
+        }
+      },
+      "detection_delay_minutes": {},
+      "first_alert_after_onset": {
+        "performance": "2019-07-08 15:33"
+      },
+      "cusum_alarms": [
+        [
+          "MB_KHANPUR_TO_SAKET_WB",
+          "2019-07-08 15:33"
+        ],
+        [
+          "MB_SAKET_TO_KHANPUR_EB",
+          "2019-07-08 21:53"
+        ]
+      ],
+      "daily": [
+        {
+          "service_date": "2019-07-05",
+          "requests": 102,
+          "mae_minutes": 2.4739467045209045,
+          "bias_minutes": 1.640572662276246
+        },
+        {
+          "service_date": "2019-07-08",
+          "requests": 127,
+          "mae_minutes": 3.6225757396594864,
+          "bias_minutes": 3.1943401826031015
+        }
+      ]
+    },
+    "covariate_shift": {
+      "alerts_by_type": {
+        "prediction_drift": {
+          "WARN": 1,
+          "ALERT": 3
+        },
+        "input_drift": {
+          "WARN": 3,
+          "ALERT": 7
+        },
+        "performance": {
+          "WARN": 1,
+          "ALERT": 0
+        }
+      },
+      "detection_delay_minutes": {
+        "input_drift": 295.7,
+        "prediction_drift": 295.7
+      },
+      "first_alert_after_onset": {
+        "input_drift": "2019-07-08 10:44",
+        "prediction_drift": "2019-07-08 10:44"
+      },
+      "cusum_alarms": [],
+      "daily": [
+        {
+          "service_date": "2019-07-05",
+          "requests": 102,
+          "mae_minutes": 2.4739467045209045,
+          "bias_minutes": 1.640572662276246
+        },
+        {
+          "service_date": "2019-07-08",
+          "requests": 127,
+          "mae_minutes": 1.7932316379499227,
+          "bias_minutes": 1.3474265437534239
+        }
+      ]
+    },
+    "concept_drift": {
+      "alerts_by_type": {
+        "prediction_drift": {
+          "WARN": 1,
+          "ALERT": 0
+        },
+        "input_drift": {
+          "WARN": 2,
+          "ALERT": 0
+        },
+        "performance": {
+          "WARN": 0,
+          "ALERT": 7
+        }
+      },
+      "detection_delay_minutes": {
+        "performance": 49.2
+      },
+      "first_alert_after_onset": {
+        "performance": "2019-07-08 10:58"
+      },
+      "cusum_alarms": [
+        [
+          "all_segments",
+          "2019-07-08 10:58"
+        ],
+        [
+          "ORR_CHIRAG_TO_NEHRU_PLACE_EB",
+          "2019-07-08 10:58"
+        ],
+        [
+          "MB_KHANPUR_TO_SAKET_WB",
+          "2019-07-08 15:33"
+        ],
+        [
+          "MB_SAKET_TO_KHANPUR_EB",
+          "2019-07-08 21:53"
+        ]
+      ],
+      "daily": [
+        {
+          "service_date": "2019-07-05",
+          "requests": 102,
+          "mae_minutes": 2.4739467045209045,
+          "bias_minutes": 1.640572662276246
+        },
+        {
+          "service_date": "2019-07-08",
+          "requests": 127,
+          "mae_minutes": 4.566125031719339,
+          "bias_minutes": 4.288527988894006
+        }
+      ]
+    },
+    "data_quality": {
+      "alerts_by_type": {
+        "prediction_drift": {
+          "WARN": 1,
+          "ALERT": 0
+        },
+        "input_drift": {
+          "WARN": 3,
+          "ALERT": 5
+        },
+        "data_quality": {
+          "WARN": 0,
+          "ALERT": 3
+        },
+        "performance": {
+          "WARN": 0,
+          "ALERT": 4
+        }
+      },
+      "detection_delay_minutes": {
+        "data_quality": 12.4,
+        "input_drift": 287.1,
+        "performance": 355.8
+      },
+      "first_alert_after_onset": {
+        "data_quality": "2019-07-08 12:18",
+        "input_drift": "2019-07-08 16:53",
+        "performance": "2019-07-08 18:01"
+      },
+      "cusum_alarms": [
+        [
+          "MB_KHANPUR_TO_SAKET_WB",
+          "2019-07-08 18:01"
+        ],
+        [
+          "all_segments",
+          "2019-07-08 21:53"
+        ],
+        [
+          "MB_SAKET_TO_KHANPUR_EB",
+          "2019-07-08 21:53"
+        ]
+      ],
+      "daily": [
+        {
+          "service_date": "2019-07-05",
+          "requests": 102,
+          "mae_minutes": 2.4739467045209045,
+          "bias_minutes": 1.640572662276246
+        },
+        {
+          "service_date": "2019-07-08",
+          "requests": 127,
+          "mae_minutes": 3.75557970800955,
+          "bias_minutes": 3.3082517034218606
+        }
+      ]
+    }
+  },
+  "retraining_trigger": {
+    "type": "performance_drift",
+    "scenario": "natural",
+    "first_alarm_ist": "2019-07-08 15:33",
+    "detector": "MB_KHANPUR_TO_SAKET_WB",
+    "alarms": [
+      {
+        "detector": "MB_KHANPUR_TO_SAKET_WB",
+        "at_ist": "2019-07-08 15:33"
+      },
+      {
+        "detector": "MB_SAKET_TO_KHANPUR_EB",
+        "at_ist": "2019-07-08 21:53"
+      }
+    ],
+    "evidence": "outputs/phase3/monitoring/natural/alerts.json"
+  },
+  "versions": [
+    {
+      "version": 1,
+      "status": "approved",
+      "change_type": "initial_release",
+      "reason": "Phase 2 approved release, imported unchanged by artifact hash. It is the serving baseline that Phase 3 monitors.",
+      "parent_version": null,
+      "training_window": {
+        "dates_ist": [
+          "2019-07-01",
+          "2019-07-02",
+          "2019-07-03"
+        ],
+        "rows": 408,
+        "rows_sha256": "b7e740b2d6f6a519ec8cd9f0730b905b84b9528c9418e7cf9ca9bec1fb503c99"
+      },
+      "holdout_metrics": {
+        "mae_minutes": 3.6225757396594864,
+        "rmse_minutes": 6.3203839851307295,
+        "mape_percent": 22.041221662099105,
+        "r2_score": 0.20497353809595853
+      },
+      "artifact_sha256": "b26d1a45f8e97278b8be70eef9c6c88e39b7d52537d55bea6a206b3391934a88"
+    },
+    {
+      "version": 2,
+      "status": "approved",
+      "change_type": "data_refresh",
+      "reason": "Performance drift alarm (MB_KHANPUR_TO_SAKET_WB, 2019-07-08 15:33 IST). Retrained on every complete labelled day before the holdout, with the v1 algorithm, features and hyperparameters unchanged.",
+      "parent_version": 1,
+      "training_window": {
+        "dates_ist": [
+          "2019-07-01",
+          "2019-07-02",
+          "2019-07-03",
+          "2019-07-05"
+        ],
+        "rows": 510,
+        "rows_sha256": "b00c05df5c4ac56192738f81f833b775cc9bcafb940c75cc97124f3ff7af028b"
+      },
+      "holdout_metrics": {
+        "mae_minutes": 3.3860331400018646,
+        "rmse_minutes": 6.078536575158867,
+        "mape_percent": 20.38140272368898,
+        "r2_score": 0.2646523233182707
+      },
+      "artifact_sha256": "79d052cca815379594c4e03e796f8d95a0f4006f96920a5f9dc09df32e79438a"
+    },
+    {
+      "version": 3,
+      "status": "rejected",
+      "change_type": "rejected_candidate",
+      "reason": "Drill: retraining attempted on a batch where the 2019-07-05 feed had the timezone/route fault seen in the data-quality scenario. Trained only in quarantine to measure the harm the gate prevents.",
+      "parent_version": 2,
+      "training_window": {
+        "dates_ist": [
+          "2019-07-01",
+          "2019-07-02",
+          "2019-07-03",
+          "2019-07-05"
+        ],
+        "rows": 510,
+        "rows_sha256": "6be6eaeb2b63c2fc184d96c48db9a8adc45d6d7a7cd79cbf59341c2ee38d76c2"
+      },
+      "holdout_metrics": {
+        "mae_minutes": 3.562278796072064,
+        "rmse_minutes": 6.189825914505098,
+        "mape_percent": 22.7419976356319,
+        "r2_score": 0.2374794965615129
+      },
+      "artifact_sha256": "7b1c7a80187136eb702c9bacac15784533a5e0a45b920a763e4d4d7412bad665"
+    }
+  ],
+  "aliases": {
+    "champion": 2,
+    "previous": 1
+  },
+  "gates": {
+    "v2": {
+      "passed": true,
+      "checks": [
+        {
+          "name": "data_validation",
+          "passed": true,
+          "detail": "training data passed every validation rule"
+        },
+        {
+          "name": "valid_predictions",
+          "passed": true,
+          "detail": "finite and positive on the whole holdout"
+        },
+        {
+          "name": "beats_champion",
+          "passed": true,
+          "detail": "MAE 3.386 vs champion 3.623 (+6.5%; required at least 3% better)"
+        },
+        {
+          "name": "beats_median_baseline",
+          "passed": true,
+          "detail": "MAE 3.386 vs retrained median 4.175"
+        },
+        {
+          "name": "no_segment_regression",
+          "passed": true,
+          "detail": "worst segment ORR_NEHRU_PLACE_TO_CHIRAG_WB: -4.3% (limit +10%)"
+        },
+        {
+          "name": "same_feature_schema",
+          "passed": true,
+          "detail": "matches the API's cold_start_v1 schema"
+        },
+        {
+          "name": "reload_parity",
+          "passed": true,
+          "detail": "max difference after save/reload 0.00e+00 min"
+        }
+      ],
+      "relative_mae_improvement": 0.06529679892347984,
+      "compared_with": {
+        "champion_version": 1,
+        "champion_metrics": {
+          "mae_minutes": 3.6225757396594864,
+          "rmse_minutes": 6.3203839851307295,
+          "mape_percent": 22.041221662099105,
+          "r2_score": 0.20497353809595853
+        },
+        "median_baseline_metrics": {
+          "mae_minutes": 4.174956169591488,
+          "rmse_minutes": 6.790895517829512,
+          "mape_percent": 27.23111825477673,
+          "r2_score": 0.08219852060080779
+        }
+      }
+    },
+    "v3": {
+      "passed": false,
+      "checks": [
+        {
+          "name": "data_validation",
+          "passed": false,
+          "detail": "failed: service_hours, registered_segment_routes"
+        },
+        {
+          "name": "valid_predictions",
+          "passed": true,
+          "detail": "finite and positive on the whole holdout"
+        },
+        {
+          "name": "beats_champion",
+          "passed": false,
+          "detail": "MAE 3.562 vs champion 3.386 (-5.2%; required at least 3% better)"
+        },
+        {
+          "name": "beats_median_baseline",
+          "passed": true,
+          "detail": "MAE 3.562 vs retrained median 4.175"
+        },
+        {
+          "name": "no_segment_regression",
+          "passed": false,
+          "detail": "worst segment ORR_CHIRAG_TO_NEHRU_PLACE_EB: +17.2% (limit +10%)"
+        },
+        {
+          "name": "same_feature_schema",
+          "passed": true,
+          "detail": "matches the API's cold_start_v1 schema"
+        },
+        {
+          "name": "reload_parity",
+          "passed": true,
+          "detail": "max difference after save/reload 0.00e+00 min"
+        }
+      ],
+      "relative_mae_improvement": -0.05205077705474026,
+      "compared_with": {
+        "champion_version": 2,
+        "champion_metrics": {
+          "mae_minutes": 3.3860331400018646,
+          "rmse_minutes": 6.078536575158867,
+          "mape_percent": 20.38140272368898,
+          "r2_score": 0.2646523233182707
+        },
+        "median_baseline_metrics": {
+          "mae_minutes": 4.174956169591488,
+          "rmse_minutes": 6.790895517829512,
+          "mape_percent": 27.23111825477673,
+          "r2_score": 0.08219852060080779
+        }
+      }
+    }
+  },
+  "rollback_drill": {
+    "rolled_back_from": 2,
+    "rolled_back_to": 1,
+    "artifact_hash_verified": true,
+    "demo_prediction_minutes": 6.320402254818158,
+    "restored_champion": 2,
+    "passed": true
+  },
+  "export": {
+    "version": 2,
+    "path": "serving/v2",
+    "manifest_sha256": "f4e4d6b8dc7835cd1bb23553b4eaa4922ae07ca2b69ad36332a5770f8a9b0c73",
+    "demo_prediction_minutes": 6.272728116582392
+  },
+  "mlflow_status": "ok",
+  "audit_chain": {
+    "valid": true,
+    "entries": 9,
+    "head_sha256": "a7ab785b64889c579f6ad9e9bbc3d8e3ebf60043ae2e7749713d7ae2a2797d4c"
+  }
+}

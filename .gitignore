@@ -34,6 +34,16 @@ wheels/
 .installed.cfg
 *.egg
 
+# React dashboard build and dependencies
+!dashboard/web/src/lib/
+!dashboard/web/src/lib/**
+dashboard/web/node_modules/
+dashboard/web/dist/
+advisor/web/node_modules/
+advisor/web/dist/
+# Local settings for the advisor (may hold private keys) - never commit
+advisor/config/local_settings.json
+
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints
 */.ipynb_checkpoints/*

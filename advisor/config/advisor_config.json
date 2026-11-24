@@ -1,0 +1,276 @@
+{
+  "_comment": "Every number here is a configurable, documented assumption or a published fare table. Change it here; the advisor reports the value it used.",
+  "service_area": {
+    "name": "Delhi service area",
+    "lat_min": 28.4,
+    "lat_max": 28.89,
+    "lon_min": 76.83,
+    "lon_max": 77.35,
+    "note": "Bounding box used to filter transit data; start/end points must lie inside the NCT of Delhi boundary (with a small tolerance).",
+    "boundary_tolerance_km": 1.0
+  },
+  "walking": {
+    "speed_kmh": 4.5,
+    "detour_factor": 1.3,
+    "max_access_m": 1000,
+    "max_transfer_m": 400,
+    "note": "Straight-line distance x detour factor at walking speed (rule-based).",
+    "auto_expand_m": [
+      1500,
+      2500
+    ]
+  },
+  "transfer_buffers_min": {
+    "_note": "Minimum time between arriving at a stop and the departure you can catch (rule-based).",
+    "board_bus": 1,
+    "board_metro_from_street": 5,
+    "metro_interchange": 4,
+    "board_rail_from_street": 6,
+    "rail_to_rail": 5
+  },
+  "router": {
+    "max_rounds": 5,
+    "max_results": 7,
+    "search_window_min": 240
+  },
+  "fares": {
+    "metro": {
+      "source": "DMRC fare revision effective 25 Aug 2025 (distance slabs). Interchanges inside the paid area are one journey.",
+      "slabs_km": [
+        2,
+        5,
+        12,
+        21,
+        32
+      ],
+      "weekday_inr": [
+        11,
+        21,
+        32,
+        43,
+        54,
+        64
+      ],
+      "sunday_holiday_inr": [
+        11,
+        11,
+        21,
+        32,
+        43,
+        54
+      ],
+      "airport_line_note": "Airport Express (Orange) legs are priced with the standard slabs; DMRC charges up to Rs 75 there, so treat those as a lower bound."
+    },
+    "bus": {
+      "source": "OTD bus GTFS fare_rules/fare_attributes (stage fares per route and stop pair).",
+      "fallback_source": "DTC non-AC distance slabs used only when the feed has no fare for a stop pair.",
+      "fallback_slabs_km": [
+        4,
+        10
+      ],
+      "fallback_inr": [
+        5,
+        10,
+        15
+      ],
+      "women_free": true,
+      "women_free_note": "Women travel free on DTC and cluster buses with the pink ticket/Saheli card."
+    },
+    "rail": {
+      "source": "Indian Railways unreserved second-class ordinary fare (assumption: minimum fare covers trips inside Delhi).",
+      "slabs_km": [
+        50
+      ],
+      "inr": [
+        10,
+        15
+      ]
+    }
+  },
+  "emissions_kg_per_pkm": {
+    "_note": "Assumed per-passenger-km factors for Delhi (configurable). Used for comparison, not certification.",
+    "bus": 0.04,
+    "metro": 0.025,
+    "rail": 0.02,
+    "walk": 0.0,
+    "car_baseline": 0.14,
+    "route_detour": {
+      "bus": 1.15,
+      "rail": 1.1,
+      "car": 1.35
+    }
+  },
+  "bus_model": {
+    "enabled": true,
+    "sources": [
+      "registry_champion",
+      "deployed_service",
+      "approved_bundle"
+    ],
+    "registry_dir": "outputs/phase3/registry",
+    "serving_dir": "outputs/phase3/serving",
+    "service_url": "http://127.0.0.1:8000",
+    "bundle_dir": "outputs/phase2_serving",
+    "deployment_record": "deploy/model-v1.json",
+    "segment_id": "ORR_CHIRAG_TO_NEHRU_PLACE_EB",
+    "corridor": {
+      "lat_min": 28.535,
+      "lat_max": 28.55,
+      "start_lon_min": 77.217,
+      "start_lon_max": 77.2225,
+      "end_lon_min": 77.241,
+      "end_lon_max": 77.247
+    },
+    "note": "Only the Outer Ring Road eastbound segment (Chirag Delhi -> Nehru Place) is in the model's approved scope. The model is taken from the first source that passes its checks: the Phase 3 registry champion (audit chain valid, gate passed, artifact hash matches), the deployed Docker API, or the Phase 2 approved bundle."
+  },
+  "metro_lines": {
+    "RED": {
+      "name": "Red Line",
+      "color": "#e53935"
+    },
+    "YELLOW": {
+      "name": "Yellow Line",
+      "color": "#f9c80e"
+    },
+    "BLUE": {
+      "name": "Blue Line",
+      "color": "#1e88e5"
+    },
+    "GREEN": {
+      "name": "Green Line",
+      "color": "#43a047"
+    },
+    "VIOLET": {
+      "name": "Violet Line",
+      "color": "#8e24aa"
+    },
+    "PINK": {
+      "name": "Pink Line",
+      "color": "#ec407a"
+    },
+    "MAGENTA": {
+      "name": "Magenta Line",
+      "color": "#c2185b"
+    },
+    "GRAY": {
+      "name": "Grey Line",
+      "color": "#9e9e9e"
+    },
+    "ORANGE/AIRPORT": {
+      "name": "Airport Express",
+      "color": "#fb8c00"
+    },
+    "AQUA": {
+      "name": "Aqua Line (NMRC)",
+      "color": "#00acc1"
+    },
+    "RAPID": {
+      "name": "Rapid Metro",
+      "color": "#26a69a"
+    }
+  },
+  "geocoder": {
+    "online": true,
+    "search_url": "https://photon.komoot.io/api/",
+    "reverse_url": "https://photon.komoot.io/reverse",
+    "fallback_reverse_url": "https://nominatim.openstreetmap.org/reverse",
+    "timeout_s": 3.5,
+    "user_agent": "DelhiCommuteAdvisor/1.0 (student MLOps project; github.com/vedanth-04/AI-Powered-Sustainable-Transportation-Advisor)",
+    "retry_after_failure_s": 60,
+    "note": "OpenStreetMap data via Photon (search-as-you-type) and Nominatim (reverse fallback, max 1 request/s). Results are cached and limited to Delhi. Offline, place search falls back to ward localities and transit stops."
+  },
+  "cab": {
+    "_note": "Cab legs: road routing (OSRM on OpenStreetMap) or a straight-line rule, times a Delhi traffic factor, plus a pickup wait. Fares are the Delhi Transport Department's notified meter fares, shown as indicative. Every value here is a configurable assumption.",
+    "routing": {
+      "provider": "osrm",
+      "url": "https://router.project-osrm.org",
+      "timeout_s": 4.0,
+      "retry_after_failure_s": 120,
+      "user_agent": "DelhiCommuteAdvisor/1.0 (student MLOps project)",
+      "note": "The public OSRM server is a best-effort demo for light use; for heavier use run your own OSRM (Docker) and change the url."
+    },
+    "fallback": {
+      "road_detour_factor": 1.35,
+      "free_flow_speed_kmh": 38,
+      "note": "Used when road routing is unavailable: straight-line distance x detour factor at a free-flow city speed, then the traffic factor."
+    },
+    "traffic_factor": [
+      {
+        "from_h": 0,
+        "to_h": 6,
+        "factor": 1.0,
+        "pickup_wait_min": 10
+      },
+      {
+        "from_h": 6,
+        "to_h": 8,
+        "factor": 1.3,
+        "pickup_wait_min": 7
+      },
+      {
+        "from_h": 8,
+        "to_h": 11,
+        "factor": 1.8,
+        "pickup_wait_min": 9
+      },
+      {
+        "from_h": 11,
+        "to_h": 17,
+        "factor": 1.45,
+        "pickup_wait_min": 7
+      },
+      {
+        "from_h": 17,
+        "to_h": 21,
+        "factor": 1.9,
+        "pickup_wait_min": 10
+      },
+      {
+        "from_h": 21,
+        "to_h": 24,
+        "factor": 1.25,
+        "pickup_wait_min": 8
+      }
+    ],
+    "traffic_note": "OSRM durations assume free-flowing roads. The factor stretches them for Delhi traffic by time of day (assumption; no live traffic data is used).",
+    "min_cab_km": 1.5,
+    "feeder_max_km": 12,
+    "feeder_stations": 6,
+    "max_cab_options": 3,
+    "night_hours": {
+      "from_h": 23,
+      "to_h": 5
+    },
+    "fare_source": "Delhi Transport Department fare notification of 9 Jan 2023 for black-and-yellow taxis and auto-rickshaws (meter fares). App cabs (Uber, Ola) set their own dynamic prices, so cab fares are indicative.",
+    "types": {
+      "taxi_ac": {
+        "label": "AC taxi",
+        "base_inr": 40,
+        "base_km": 1.0,
+        "per_km_inr": 20,
+        "night_surcharge": 0.25,
+        "kg_co2_per_vkm": 0.15,
+        "occupancy": 1.0
+      },
+      "taxi_non_ac": {
+        "label": "Non-AC taxi",
+        "base_inr": 40,
+        "base_km": 1.0,
+        "per_km_inr": 17,
+        "night_surcharge": 0.25,
+        "kg_co2_per_vkm": 0.13,
+        "occupancy": 1.0
+      },
+      "auto": {
+        "label": "Auto-rickshaw",
+        "base_inr": 30,
+        "base_km": 1.5,
+        "per_km_inr": 11,
+        "night_surcharge": 0.25,
+        "kg_co2_per_vkm": 0.065,
+        "occupancy": 1.0
+      }
+    },
+    "co2_note": "kg CO2 per vehicle-km for CNG vehicles (assumption) divided by occupancy gives kg per passenger-km."
+  }
+}

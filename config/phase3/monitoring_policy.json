@@ -1,0 +1,107 @@
+{
+  "policy_version": 1,
+  "description": "Phase 3 monitoring policy for the historical replay of BusTravelTimePredictor. All thresholds are calibrated on in-control reference data at run time; the numbers below are false-alarm targets, not fixed statistic cut-offs.",
+  "reference": {
+    "inputs": "Training split of the approved v1 model (2019-07-01 to 2019-07-03, IST).",
+    "performance": "Approved v1 validation errors (2019-07-05). This is the error level the model was approved at."
+  },
+  "replay": {
+    "validation_start_ist": "2019-07-05",
+    "test_start_ist": "2019-07-08",
+    "label_arrival": "A traversal's observed duration becomes available when the bus exits the segment (t_exit)."
+  },
+  "periods": [
+    {
+      "name": "early",
+      "start_hour": 0,
+      "end_hour": 8
+    },
+    {
+      "name": "morning_rush",
+      "start_hour": 8,
+      "end_hour": 11
+    },
+    {
+      "name": "midday",
+      "start_hour": 11,
+      "end_hour": 17
+    },
+    {
+      "name": "evening",
+      "start_hour": 17,
+      "end_hour": 24
+    }
+  ],
+  "monitored_features": {
+    "categorical": [
+      "segment_id",
+      "route_id",
+      "direction",
+      "rush_hour_cat"
+    ],
+    "numeric": [
+      "minute_of_day"
+    ],
+    "note": "segment_length_km and the cold-start history features are fixed functions of segment_id; sin_time and cos_time are fixed functions of minute_of_day."
+  },
+  "thresholds": {
+    "bootstrap_iterations": 1000,
+    "warn_quantile": 0.95,
+    "alert_quantile": 0.99,
+    "psi_bins": 5,
+    "min_window_requests": 10,
+    "min_window_labels": 8,
+    "data_quality_alert_rate": 0.05,
+    "timestamp_skew_minutes": 15,
+    "dq_rolling_requests": 20
+  },
+  "performance_detector": {
+    "method": "One-sided CUSUM on |error| divided by the error expected for that segment and time-of-day period under approval conditions",
+    "target": 1.0,
+    "slack": 0.5,
+    "error_cap": 6.0,
+    "min_expected_error_minutes": 0.5,
+    "block_length": 8,
+    "family_false_alarm_rate": 0.05,
+    "calibration_iterations": 2000,
+    "calibration_note": "Thresholds come from a circular block bootstrap of the approved validation errors in label-arrival order, which keeps congestion-driven error clusters together."
+  },
+  "scenarios": {
+    "natural": {
+      "title": "Natural replay (no injection)",
+      "description": "Real held-out traffic of 5 and 8 July 2019 replayed in time order through the approved model."
+    },
+    "covariate_shift": {
+      "title": "Induced data drift: demand shift",
+      "description": "From 8 July, the request mix shifts toward the Outer Ring Road eastbound segment served by the API (real traversals resampled with their real labels).",
+      "onset_ist": "2019-07-08T00:00:00+05:30",
+      "segment_weights": {
+        "ORR_CHIRAG_TO_NEHRU_PLACE_EB": 4.0
+      },
+      "evening_weight": 1.0,
+      "evening_start_hour": 17
+    },
+    "concept_drift": {
+      "title": "Induced model drift: road works",
+      "description": "From 10:00 on 8 July, riding time on the Outer Ring Road eastbound segment rises by 60% (inputs unchanged).",
+      "onset_ist": "2019-07-08T10:00:00+05:30",
+      "segment_id": "ORR_CHIRAG_TO_NEHRU_PLACE_EB",
+      "duration_multiplier": 1.6
+    },
+    "data_quality": {
+      "title": "Induced data-quality fault: timezone bug",
+      "description": "From 12:00 on 8 July, 40% of requests send UTC clock time labelled as IST (5 h 30 min early) and 10% carry an unregistered route code.",
+      "onset_ist": "2019-07-08T12:00:00+05:30",
+      "timezone_fault_fraction": 0.4,
+      "timezone_shift_minutes": -330,
+      "unknown_route_fraction": 0.1,
+      "unknown_route_id": "90X"
+    }
+  },
+  "runbook": {
+    "input_drift": "Investigate the request mix and upstream feeds. Drift is a signal, not proof of model error: do not retrain on input drift alone.",
+    "prediction_drift": "Check whether the input change explains the prediction change; compare with delayed labels before acting.",
+    "data_quality": "Quarantine the affected batch, exclude it from any retraining data and notify the data owner. Fix the feed before trusting drift statistics.",
+    "performance": "Open a retraining candidate on the latest complete labelled days. The candidate must pass the promotion policy; the serving version stays unchanged until it does."
+  }
+}

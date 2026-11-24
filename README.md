@@ -1,6 +1,38 @@
 # AI-Powered Sustainable Transportation Advisor
 
-**Faculty presentation:** [Phase 2 — implementation, architecture and verified results](docs/PHASE2_PRESENTATION.md).
+**Faculty presentation:** [Phase 2 — implementation, architecture and verified results](docs/PHASE2_PRESENTATION.md) · [Phase 3 — drift, versioning, dashboard and governance](docs/PHASE3_PRESENTATION.md).
+
+## Phase 3 · Productionization & deployment
+
+| Requirement | Where |
+|---|---|
+| Induce data/model drift; detection and monitoring | [`src/monitoring`](src/monitoring) · [monitoring policy](config/phase3/monitoring_policy.json) |
+| Model versioning and why | [`src/versioning`](src/versioning) · [promotion policy](config/phase3/promotion_policy.json) |
+| Dashboard of the whole MLOps pipeline | [`dashboard/web`](dashboard/web) (React) + [`dashboard/server.py`](dashboard/server.py) (API) |
+| Governance and justification | [governance](docs/PHASE3_GOVERNANCE.md) · [model card](docs/MODEL_CARD.md) |
+
+```powershell
+python -m scripts.run_phase3 --write-evidence          # replay -> drift alerts -> retrain -> gate -> v2 -> rollback drill
+cd dashboard/web; npm install; npm run build; cd ../..  # once (Node.js 18+)
+python -m dashboard.server                             # http://127.0.0.1:8050
+```
+
+Step-by-step commands and the demo sequence: [Phase 3 guide](docs/PHASE3_GUIDE.md). Phase 3 is a historical replay of 5 and 8 July 2019; it never changes the live v1 container, the Phase 2 registry or the GHCR image.
+
+## Delhi multimodal advisor (separate app)
+
+Plans bus + metro + local-train + cab journeys across Delhi from public OTD/DMRC/Indian Railways data: per-leg and total fares within a budget, transfers, walking, CO₂ and plain-language reasons. Metro and trains use timetables, cabs use OpenStreetMap road routing with a traffic factor and Delhi meter fares, and the approved bus model is used only on its ORR eastbound segment. Details: [docs/ADVISOR.md](docs/ADVISOR.md). **Final report, evaluation and limitations: [docs/FINAL_REPORT.md](docs/FINAL_REPORT.md).**
+
+```powershell
+python -m scripts.advisor_fetch_data; python -m scripts.advisor_build_network   # once
+cd advisor/web; npm install; npm run build; cd ../..                           # once
+python -m advisor.server                                                       # http://127.0.0.1:8070
+python -m scripts.advisor_check                                                # data, model parity, geocoder, API
+python -m scripts.advisor_demo_cases                                           # docs/DEMO_CASES.md
+python -m scripts.advisor_evaluate_corridor                                    # model vs median vs timetable
+python -m scripts.advisor_recommendation_quality                               # 200 random requests, rule checks
+python -m scripts.register_advisor_release                                     # ledger + MLflow version 4
+```
 
 Predict Delhi bus **segment riding time in minutes** from GPS-derived historical traversals. The broader proposed advisor will compare journey time, cost and estimated emissions; multimodal routing, fares, waiting/transfer estimates and a journey UI remain future milestones.
 
