@@ -85,7 +85,7 @@ export default function MapView({ network, journey, origin, destination, pickRol
     L.control.scale({ position: 'bottomleft', imperial: false }).addTo(m);
     layers.current.network = L.layerGroup().addTo(m);
     layers.current.journey = L.layerGroup().addTo(m);
-    layers.current.pins = L.layerGroup().addTo(m);
+    layers.current.pins = new Map();
     m.on('click', (e) => {
       const { onPick: pick, pickRole: role } = handlers.current;
       if (role) {
@@ -115,7 +115,11 @@ export default function MapView({ network, journey, origin, destination, pickRol
     t.on('tileerror', () => { errors += 1; if (errors > 6) setTilesFailed(true); });
     t.on('tileload', () => setTilesFailed(false));
     t.addTo(m).bringToBack();
-    return () => { t.off(); t.remove(); };
+    return () => {
+      // Leaflet's remove listener detaches the tile layer's map events.
+      t.remove();
+      t.off();
+    };
   }, [style]);
 
   // cursor while picking
@@ -230,21 +234,57 @@ export default function MapView({ network, journey, origin, destination, pickRol
 
   // origin / destination pins (draggable)
   useEffect(() => {
-    const g = layers.current.pins;
-    g.clearLayers();
-    [['origin', origin], ['destination', destination]].forEach(([role, p]) => {
-      if (!p) return;
-      const mk = L.marker([p.lat, p.lon], { icon: pinIcon(role), draggable: true, zIndexOffset: 1000, title: `${role === 'origin' ? 'Start' : 'Destination'}: ${p.name}` });
-      mk.bindTooltip(`${role === 'origin' ? 'Start' : 'Destination'}: ${p.name}`, { direction: 'top', offset: [0, -38], className: 'map-tip' });
-      mk.on('dragend', () => { const ll = mk.getLatLng(); handlers.current.onPick(role, ll.lat, ll.lng); });
-      mk.addTo(g);
-    });
-    if (!journey) {
-      const pts = [origin, destination].filter(Boolean).map((p) => [p.lat, p.lon]);
-      if (pts.length === 2) fitMap(map.current, pts);
-      else if (pts.length === 1) map.current.setView(pts[0], Math.max(map.current.getZoom(), 13), { animate: allowMotion() });
+    const pins = layers.current.pins;
+    for (const [role, place] of [['origin', origin], ['destination', destination]]) {
+      const pin = pins.get(role);
+      if (!place) {
+        pin?.marker.remove();
+        pins.delete(role);
+        continue;
+      }
+
+      const { lat, lon, name } = place;
+      const title = `${role === 'origin' ? 'Start' : 'Destination'}: ${name}`;
+      if (pin) {
+        // Replacing an icon during animated zoom skips its position transition.
+        if (lat !== pin.lat || lon !== pin.lon) {
+          pin.marker.setLatLng([lat, lon]);
+          pin.lat = lat;
+          pin.lon = lon;
+        }
+        if (pin.marker.options.title !== title) {
+          pin.marker.options.title = title;
+          pin.marker.getElement()?.setAttribute('title', title);
+          pin.marker.setTooltipContent(title);
+        }
+        continue;
+      }
+
+      const marker = L.marker([lat, lon], { icon: pinIcon(role), draggable: true, zIndexOffset: 1000, title });
+      marker.bindTooltip(title, { direction: 'top', offset: [0, -38], className: 'map-tip' });
+      marker.on('dragend', () => {
+        const point = marker.getLatLng();
+        handlers.current.onPick(role, point.lat, point.lng);
+      });
+      marker.addTo(map.current);
+      pins.set(role, { marker, lat, lon });
     }
-  }, [origin, destination, journey]);
+  }, [origin, destination]);
+
+  const originLat = origin?.lat;
+  const originLon = origin?.lon;
+  const destinationLat = destination?.lat;
+  const destinationLon = destination?.lon;
+
+  // An address lookup can change a pin's label without changing its coordinates.
+  useEffect(() => {
+    if (journey) return;
+    const points = [[originLat, originLon], [destinationLat, destinationLon]]
+      .filter(([lat, lon]) => lat != null && lon != null);
+    const m = map.current;
+    if (points.length === 2) fitMap(m, points);
+    else if (points.length === 1) m.setView(points[0], Math.max(m.getZoom(), 13), { animate: allowMotion() });
+  }, [originLat, originLon, destinationLat, destinationLon, journey]);
 
   const fitSelection = () => {
     const points = journey?.legs.flatMap((leg) => leg.path) || [origin, destination].filter(Boolean).map((p) => [p.lat, p.lon]);
