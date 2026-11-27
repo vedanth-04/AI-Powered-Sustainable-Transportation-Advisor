@@ -278,9 +278,16 @@ class Advisor:
         journeys = [self._enrich(j, profile, depart, t0, o, d, women_free_bus, smart_card, cab_access, cab_egress, cab_type)
                     for j, profile in raw.values()]
         journeys = [j for j in journeys if j is not None]
-        if use_cab and cab_only is not None and straight >= self.cfg["cab"]["min_cab_km"] / 1.35:
-            journeys.append(self._cab_only_journey(o, d, cab_only, t0, cab_type))
+        cab_notes = []
+        if cab_only is not None:
+            min_cab_km = self.cfg["cab"]["min_cab_km"]
+            if cab_only.km >= min_cab_km:
+                journeys.append(self._cab_only_journey(o, d, cab_only, t0, cab_type))
+            else:
+                cab_notes.append(f"Direct cab estimates are available for trips of at least {min_cab_km:g} km by road.")
         if not journeys:
+            if cab_notes:
+                raise PlanError("no_connection", cab_notes[0], "Try a longer trip or allow public transport.")
             raise PlanError("no_connection",
                             f"No connection found leaving at {depart:%H:%M} within the next "
                             f"{self.cfg['router']['search_window_min'] // 60} hours with the modes you allowed.",
@@ -288,7 +295,7 @@ class Advisor:
         result = self._rank(journeys, budget_inr, priority)
         self._attach_cab_paths(result["journeys"])
         car_km = straight * self.cfg["emissions_kg_per_pkm"]["route_detour"]["car"]
-        cab_notes = self._cab_notes(result["journeys"])
+        cab_notes.extend(self._cab_notes(result["journeys"]))
         return {
             "query": {"origin": o.__dict__, "destination": d.__dict__, "depart": depart.isoformat(), "weekday": depart.strftime("%A"),
                       "budget_inr": budget_inr, "priority": priority, "women_free_bus": women_free_bus,
@@ -673,17 +680,22 @@ class Advisor:
         pool = within if within else keep
         pool.sort(key=lambda j: j["score"])
         others = sorted([j for j in keep if j not in pool], key=lambda j: j["fare_inr"])
-        # keep room for public-transport alternatives: at most a few cab options, best-ranked first
-        cab_cap, cab_seen, ordered = self.cfg["cab"].get("max_cab_options", 3), 0, []
+        # Reserve one cab slot for the direct comparison, even when cheaper feeders rank first.
+        cab_cap = self.cfg["cab"].get("max_cab_options", 3)
+        direct_cab = next((j for j in keep if j["profile"] == "cab only"), None) if cab_cap > 0 else None
+        mixed_cab_slots = cab_cap - int(direct_cab is not None)
+        ordered = []
         for j in pool + others:
-            if "cab" in j["modes"]:
-                if cab_seen >= cab_cap:
+            if "cab" in j["modes"] and j is not direct_cab:
+                if mixed_cab_slots <= 0:
                     continue
-                cab_seen += 1
+                mixed_cab_slots -= 1
             ordered.append(j)
         ordered = ordered[: self.cfg["router"]["max_results"]]
         if not ordered:
             return {"journeys": [], "budget_status": None}
+        if direct_cab is not None and all(j is not direct_cab for j in ordered):
+            ordered[-1] = direct_cab
         cheapest = min(keep, key=lambda j: (j["fare_inr"], j["_arrive_sec"]))
         fastest = min(keep, key=lambda j: (j["_arrive_sec"], j["fare_inr"]))
         fewest = min(keep, key=lambda j: (j["vehicle_changes"], j["_arrive_sec"]))

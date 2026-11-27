@@ -252,6 +252,45 @@ def test_cab_only_option_uses_meter_fare_traffic_and_pickup(advisor):
     assert any("indicative" in n for n in result["notes"])
 
 
+def test_all_modes_keep_direct_cab_when_results_are_full(advisor, monkeypatch):
+    modes = ["bus", "metro", "rail", "cab"]
+    unrestricted = advisor.plan(ALPHA, CHARLIE, MONDAY_0700, budget_inr=40, modes=modes)["journeys"]
+    assert len(unrestricted) > 2 and all("cab" not in j["modes"] for j in unrestricted[:2])
+
+    monkeypatch.setitem(advisor.cfg["router"], "max_results", 2)
+    options = advisor.plan(ALPHA, CHARLIE, MONDAY_0700, budget_inr=40, modes=modes)["journeys"]
+    assert len(options) == 2
+    assert "recommended" in options[0]["tags"]
+    direct = options[1]
+    assert direct["modes"] == ["cab"] and "over budget" in direct["tags"]
+    assert direct["legs"][0]["cab"]["pickup_min"] > 0
+
+
+def test_direct_cab_has_a_slot_when_a_feeder_ranks_higher(advisor, monkeypatch):
+    far = {"lat": 28.60, "lon": 77.17, "label": "Far west"}
+    modes = ["metro", "cab"]
+    unrestricted = advisor.plan(far, CHARLIE, MONDAY_0700, modes=modes)["journeys"]
+    assert unrestricted[0]["modes"] == ["cab", "metro"]
+    assert any(j["modes"] == ["cab"] for j in unrestricted)
+
+    monkeypatch.setitem(advisor.cfg["cab"], "max_cab_options", 1)
+    options = advisor.plan(far, CHARLIE, MONDAY_0700, modes=modes)["journeys"]
+    assert [j["modes"] for j in options] == [["cab"]]
+
+
+def test_direct_cab_minimum_uses_road_distance(advisor, monkeypatch):
+    from advisor.cab import CabEstimate
+
+    nearby = {"lat": 28.60, "lon": 77.208, "label": "Across the road network"}
+    with pytest.raises(PlanError, match="at least 1.5 km by road"):
+        advisor.plan(ALPHA, nearby, MONDAY_0700, modes=["cab"])
+
+    estimate = CabEstimate(km=1.8, drive_sec=220, free_flow_sec=170, pickup_sec=420, traffic_factor=1.3, method="osrm")
+    monkeypatch.setattr(advisor.cab, "one_to_many", lambda *args: [estimate])
+    options = advisor.plan(ALPHA, nearby, MONDAY_0700, modes=["cab"])["journeys"]
+    assert options[0]["legs"][0]["distance_km"] == 1.8
+
+
 def test_night_charge_and_auto_rickshaw(advisor):
     night = advisor.plan(ALPHA, CHARLIE, datetime(2026, 11, 23, 23, 30, tzinfo=IST), cab_type="auto")
     leg = night["journeys"][0]["legs"][0]

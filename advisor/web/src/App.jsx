@@ -38,10 +38,13 @@ export default function App() {
   const [walk, setWalk] = useState(1000);
   const [modes, setModes] = useState({ bus: true, metro: true, rail: true, cab: true });
   const [cabType, setCabType] = useState('taxi_ac');
-  const toggleMode = (m) => setModes((cur) => {
-    const next = { ...cur, [m]: !cur[m] };
-    return Object.values(next).some(Boolean) ? next : cur; // keep at least one mode
-  });
+  const toggleMode = (mode) => {
+    const next = { ...modes, [mode]: !modes[mode] };
+    if (!Object.values(next).some(Boolean)) return;
+    setModes(next);
+    setResult(null);
+    setError(null);
+  };
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
@@ -157,6 +160,8 @@ export default function App() {
   };
 
   const journey = result?.journeys?.[selected];
+  const directCabIndex = result?.journeys.findIndex((j) => j.profile === 'cab only') ?? -1;
+  const cabIndex = directCabIndex >= 0 ? directCabIndex : (result?.journeys.findIndex((j) => j.modes.includes('cab')) ?? -1);
   const bm = health?.bus_model;
 
   return (
@@ -194,12 +199,12 @@ export default function App() {
 
       <main className="content">
         <section className="hero" aria-labelledby="page-title">
+          <div className="hero-photo" aria-hidden="true" />
           <div className="hero-copy">
             <p className="hero-location"><PinIcon width={16} height={16} /> Delhi, India</p>
-            <h1 id="page-title">Plan your trip <em>across Delhi.</em></h1>
-            <p className="hero-description">Compare bus, metro, train, and cab routes by travel time, fare, and estimated emissions.</p>
+            <h1 id="page-title">Find your way <em>across Delhi.</em></h1>
+            <p className="hero-description">Compare bus, metro, train, and cab routes by travel time and fare.</p>
           </div>
-          <div className="hero-photo" aria-hidden="true" />
         </section>
 
         <div id="planner" className="shell" ref={topRef}>
@@ -207,7 +212,7 @@ export default function App() {
             <form className="planner" onSubmit={submit} aria-busy={loading}>
               <div className="planner-heading">
                 <span className="planner-icon"><MapPickIcon width={22} height={22} /></span>
-                <div><h2>Plan a journey</h2><p>Enter a start and destination.</p></div>
+                <h2>Plan a journey</h2>
               </div>
               <div className="signboard">
                 <PlaceInput role="origin" label="Start" value={origin} onChange={(p) => setPlace('origin', p)}
@@ -249,8 +254,8 @@ export default function App() {
                   <span className="set-label">Transport modes</span>
                   <div className="set-ctrl modes" role="group" aria-label="Allowed modes">
                     {MODES.map(([m, label]) => (
-                      <button key={m} type="button" aria-pressed={modes[m]} className={`mode-toggle ${modes[m] ? 'on' : ''}`} onClick={() => toggleMode(m)}>
-                        <ModeIcon mode={m} width={15} height={15} />{label}
+                      <button key={m} type="button" disabled={loading} aria-pressed={modes[m]} className={`mode-toggle mode-${m} ${modes[m] ? 'on' : ''}`} onClick={() => toggleMode(m)}>
+                        <ModeIcon mode={m} width={20} height={20} />{label}
                       </button>
                     ))}
                   </div>
@@ -272,7 +277,12 @@ export default function App() {
                         <span className="set-label">Cab type</span>
                         <div className="set-ctrl seg cabtype" role="group" aria-label="Cab type">
                           {[['taxi_ac', 'AC taxi'], ['taxi_non_ac', 'Non-AC taxi'], ['auto', 'Auto']].map(([k, label]) => (
-                            <button key={k} type="button" aria-pressed={cabType === k} className={cabType === k ? 'on' : ''} onClick={() => setCabType(k)}>{label}</button>
+                            <button key={k} type="button" disabled={loading} aria-pressed={cabType === k} className={cabType === k ? 'on' : ''} onClick={() => {
+                              if (k === cabType) return;
+                              setCabType(k);
+                              setResult(null);
+                              setError(null);
+                            }}>{label}</button>
                           ))}
                         </div>
                       </div>
@@ -311,28 +321,39 @@ export default function App() {
             <section className="results" ref={resultsRef} aria-label="Route options">
               <div className="results-head">
                 <div><h2>Compare routes</h2><span>{result.journeys.length} {result.journeys.length === 1 ? 'option' : 'options'} · {result.query.weekday}</span></div>
-                {journey && <button type="button" className="outline" onClick={scrollToTrip}>View itinerary <ChevronDownIcon width={16} height={16} /></button>}
+                <div className="results-actions">
+                  {cabIndex >= 0 && cabIndex !== selected && (
+                    <button type="button" className="outline cab-action" onClick={() => { setSelected(cabIndex); requestAnimationFrame(scrollToTrip); }}>
+                      <ModeIcon mode="cab" width={16} height={16} /> View cab details
+                    </button>
+                  )}
+                  {journey && <button type="button" className="outline" onClick={scrollToTrip}>{journey.modes.includes('cab') ? 'View cab itinerary' : 'View itinerary'} <ChevronDownIcon width={16} height={16} /></button>}
+                </div>
               </div>
               {result.budget_status && (
                 <div className={`notice ${result.budget_status.ok ? 'good' : 'warn'}`}>{result.budget_status.message}</div>
               )}
-              {result.notes.map((n, i) => <div key={i} className="notice info"><InfoIcon width={15} height={15} /><span>{n}</span></div>)}
               <ol className="options">
                 {result.journeys.map((j, i) => (
                   <OptionRow key={j.id} index={i} journey={j} selected={i === selected} budget={result.query.budget_inr}
                              onSelect={() => setSelected(i)} />
                 ))}
               </ol>
+              {result.notes.length > 0 && (
+                <ul className="result-notes" aria-label="Journey estimate notes">
+                  {result.notes.map((note, i) => <li key={i}><InfoIcon width={15} height={15} /><span>{note}</span></li>)}
+                </ul>
+              )}
             </section>
           )}
 
           <section className="intro" id="examples" aria-labelledby="examples-title">
             <h2 id="examples-title">Try a sample trip</h2>
             <div className="examples">
-              {EXAMPLES.map(([a, b]) => (
+              {EXAMPLES.map(([a, b], i) => (
                 <button key={a} type="button" disabled={loading || exampleLoading !== null} onClick={() => { loadExample(a, b); scrollToTop(); }}>
-                  <span className="example-icon">{exampleLoading === a ? <span className="spinner small" /> : <PinIcon width={19} height={19} />}</span>
-                  <span>{a} to <strong>{b}</strong></span>
+                  <span className={`example-icon example-tone-${i}`}>{exampleLoading === a ? <span className="spinner small" /> : <PinIcon width={19} height={19} />}</span>
+                  <span className="example-places"><strong>{a}</strong><span>to {b}</span></span>
                 </button>
               ))}
             </div>

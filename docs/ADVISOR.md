@@ -102,7 +102,7 @@ The approved model was trained on 2019 GPS traversals of OTD route id 90. Today'
 6. **Cabs and autos.**
    - **Time:** OSRM road routing on OpenStreetMap (the public demo server, used lightly) gives the free-flow driving time. It is multiplied by a Delhi traffic factor for the hour (×1.0 at night up to ×1.9 in the evening peak), and an assumed pickup wait of 7–10 minutes is added. If OSRM cannot be reached, the road distance is the straight line × 1.35 at an assumed 38 km/h free-flow speed, and the result says so.
    - **Fare:** the Delhi meter fares notified on 9 Jan 2023: AC taxi ₹40 for the first km then ₹20/km, non-AC ₹17/km, auto-rickshaw ₹30 for the first 1.5 km then ₹11/km, with 25% extra from 11 pm to 5 am. App cabs price dynamically, so cab fares are labelled indicative, and availability is never checked.
-   - **Options:** a cab-only option is always shown for comparison (it is never pruned), plus cab + metro/train combinations; at most three cab options per request. Cab legs under 1.5 km are not offered.
+   - **Options:** a direct cab is kept for comparison when its estimated road distance is at least 1.5 km. Up to three cab options can appear, including cab + metro/train combinations. Over-budget cabs are still labelled as such.
 7. **CO₂.** Distance × a per-passenger-km factor for each mode, compared with driving alone; cab legs use kg per vehicle-km ÷ occupancy. The factors are assumptions.
 8. **Ranking.**
    - Options that are no better than another option on any criterion are dropped: arrival, fare, changes, CO₂ and walking.

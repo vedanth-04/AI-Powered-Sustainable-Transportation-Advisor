@@ -17,7 +17,7 @@ function fitMap(m, points, maxZoom = 15) {
   if (!m || !points.length) return;
   m.fitBounds(L.latLngBounds(points), {
     animate: allowMotion(), duration: 0.6, maxZoom,
-    paddingTopLeft: [40, 100], paddingBottomRight: [48, 80],
+    paddingTopLeft: [32, 36], paddingBottomRight: [48, 52],
   });
 }
 
@@ -280,14 +280,52 @@ export default function MapView({ network, journey, origin, destination, pickRol
 
   return (
     <div className={`mapview ${journey ? 'has-journey' : ''}`}>
-      <div ref={el} className="leaflet-host" aria-label="Interactive Delhi transport map. Click to choose a start or destination; use arrow keys to pan and plus or minus to zoom." />
-      {!pickRole && (
-        <div className={`map-context ${selectedPlaces.length ? 'has-places' : ''}`} role="status" aria-live="polite" aria-atomic="true">
-          <div className="map-context-heading">
-            <span className="map-context-kicker">{journey ? 'Selected journey' : selectedPlaces.length ? 'Journey preview' : 'Explore Delhi'}</span>
-            <span className="map-context-provider">{style === 'osm' ? 'Street map' : 'Transit network'}</span>
+      <header className="map-panel-header">
+        <div className="map-panel-heading">
+          <span className="map-panel-icon" aria-hidden="true"><MapPickIcon width={19} height={19} /></span>
+          <strong>Delhi route map</strong>
+        </div>
+        <div className="map-tools" role="group" aria-label="Map controls">
+          <div className="style-switch" role="radiogroup" aria-label="Map style" onKeyDown={changeStyleWithKeyboard}>
+            {Object.entries(MAP_STYLES).map(([key, label]) => (
+              <button key={key} type="button" role="radio" aria-checked={style === key} tabIndex={style === key ? 0 : -1} data-style={key}
+                title={key === 'osm' ? 'OpenStreetMap streets and places' : 'Transit network without background map tiles'}
+                className={style === key ? 'on' : ''} onClick={() => setStyle(key)}>
+                {label}
+              </button>
+            ))}
           </div>
-          {selectedPlaces.length ? (
+          <span className="map-tool-divider" aria-hidden="true" />
+          <button type="button" className="tool-btn map-locate" onClick={onLocate} aria-label="Use my current location as the start" title="Use my current location as the start"><CrosshairIcon width={16} height={16} /><span>Locate me</span></button>
+          {(journey || origin || destination) && <button type="button" className="tool-btn fit-route" onClick={fitSelection} aria-label={journey ? 'Fit the selected route in view' : 'Show selected places on the map'} title="Fit the selected journey or places in view"><FitIcon /><span>{journey ? 'Fit route' : 'View points'}</span></button>}
+          <button type="button" className="tool-btn map-reset" onClick={viewDelhi} aria-label="Show the whole Delhi service area" title="Show the Delhi service area"><MapPickIcon width={16} height={16} /><span>All Delhi</span></button>
+        </div>
+      </header>
+
+      <div className="map-canvas">
+        <div ref={el} className="leaflet-host" aria-label="Interactive Delhi transport map. Click to choose a start or destination; use arrow keys to pan and plus or minus to zoom." />
+        {pickRole && (
+          <div className="pick-banner" role="status">
+            <span className={`pick-dot ${pickRole}`} />
+            Click the map to set the {pickRole === 'origin' ? 'start' : 'destination'}
+            <button type="button" onClick={onCancelPick} title="Cancel map selection (Escape)">Cancel</button>
+          </div>
+        )}
+        {wheelHint && <div className="wheel-hint" role="status">Use Ctrl or ⌘ + scroll to zoom</div>}
+        {tilesFailed && (
+          <div className="tiles-off" role="status"><span>The street map is unavailable. Your routes and stations are still shown.</span><button type="button" className="map-fallback-action" onClick={() => setStyle('dark')}>Use network map</button></div>
+        )}
+      </div>
+
+      <footer className="map-panel-footer">
+        <div className={`map-context ${selectedPlaces.length ? 'has-places' : ''}`} role="status" aria-live="polite" aria-atomic="true">
+          {journey && (
+            <div className="map-context-heading">
+              <span className="map-context-kicker">Selected journey</span>
+              <span className="map-context-provider">{journey.leave}–{journey.arrive}</span>
+            </div>
+          )}
+          {selectedPlaces.length > 0 && (
             <div className="map-context-places">
               {selectedPlaces.map(([role, place]) => (
                 <div key={role} className="map-context-place">
@@ -296,44 +334,19 @@ export default function MapView({ network, journey, origin, destination, pickRol
                 </div>
               ))}
             </div>
-          ) : <strong className="map-context-title">Delhi transport map</strong>}
+          )}
           <span className={`map-context-subtitle ${journey ? 'map-route-facts' : ''}`}>{contextHint}</span>
         </div>
-      )}
-      {pickRole && (
-        <div className="pick-banner" role="status">
-          <span className={`pick-dot ${pickRole}`} />
-          Click the map to set the {pickRole === 'origin' ? 'start' : 'destination'}
-          <button type="button" onClick={onCancelPick} title="Cancel map selection (Escape)">Cancel</button>
+        <div className="map-key" role="group" aria-label="Map legend">
+          <span><i className="k-pin a" aria-hidden="true">A</i>Start</span>
+          <span><i className="k-pin b" aria-hidden="true">B</i>Destination</span>
+          <span><i className="k-walk" aria-hidden="true" />Walk</span>
+          <span title="Metro station"><i className="k-station" aria-hidden="true" />Metro</span>
+          <span title="Railway station"><i className="k-rail" aria-hidden="true" />Rail</span>
+          {journey?.legs.some((l) => l.mode === 'cab') && <span><i className="k-cab" aria-hidden="true" />Cab</span>}
+          {network?.corridor && <span title="Bus travel-time model on the supported Outer Ring Road stretch"><i className="k-model" aria-hidden="true" />ML bus segment</span>}
         </div>
-      )}
-      <div className="map-tools" role="group" aria-label="Map controls">
-        <div className="style-switch" role="radiogroup" aria-label="Map style" onKeyDown={changeStyleWithKeyboard}>
-          {Object.entries(MAP_STYLES).map(([key, label]) => (
-            <button key={key} type="button" role="radio" aria-checked={style === key} tabIndex={style === key ? 0 : -1} data-style={key}
-              title={key === 'osm' ? 'OpenStreetMap streets and places' : 'Transit network without background map tiles'}
-              className={style === key ? 'on' : ''} onClick={() => setStyle(key)}>
-              {label}
-            </button>
-          ))}
-        </div>
-        <button type="button" className="tool-btn map-locate" onClick={onLocate} aria-label="Use my current location as the start" title="Use my current location as the start"><CrosshairIcon width={16} height={16} /><span>Locate me</span></button>
-        {(journey || origin || destination) && <button type="button" className="tool-btn fit-route" onClick={fitSelection} aria-label={journey ? 'Fit the selected route in view' : 'Show selected places on the map'} title="Fit the selected journey or places in view"><FitIcon /><span>{journey ? 'Fit route' : 'View points'}</span></button>}
-        <button type="button" className="tool-btn map-reset" onClick={viewDelhi} aria-label="Show the whole Delhi service area" title="Show the Delhi service area"><MapPickIcon width={16} height={16} /><span>All Delhi</span></button>
-      </div>
-      {wheelHint && <div className="wheel-hint" role="status">Use Ctrl or ⌘ + scroll to zoom</div>}
-      {tilesFailed && (
-        <div className="tiles-off" role="status"><span>The street map is unavailable. Your routes and stations are still shown.</span><button type="button" className="map-fallback-action" onClick={() => setStyle('dark')}>Use network map</button></div>
-      )}
-      <div className="map-key" role="group" aria-label="Map legend">
-        <span><i className="k-pin a">A</i>Start</span>
-        <span><i className="k-pin b">B</i>Destination</span>
-        <span><i className="k-walk" />Walk</span>
-        <span><i className="k-station" />Metro station</span>
-        <span><i className="k-rail" />Railway station</span>
-        {journey?.legs.some((l) => l.mode === 'cab') && <span><i className="k-cab" />Cab</span>}
-        {network?.corridor && <span><i className="k-model" />Bus-model stretch</span>}
-      </div>
+      </footer>
     </div>
   );
 }

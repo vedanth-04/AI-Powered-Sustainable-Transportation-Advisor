@@ -1,4 +1,4 @@
-import { ChangeIcon, ChevronDownIcon, ClockIcon, InfoIcon, LeafIcon, ModeIcon, RupeeIcon } from './icons.jsx';
+import { ChangeIcon, ChevronDownIcon, ClockIcon, InfoIcon, LeafIcon, ModeIcon, RupeeIcon, SparkIcon } from './icons.jsx';
 
 export const inr = (v) => `₹${Number(v).toLocaleString('en-IN', { maximumFractionDigits: 1 })}`;
 export const mins = (m) => {
@@ -7,6 +7,16 @@ export const mins = (m) => {
 };
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 const SOURCE_TEXT = { registry_champion: 'registry champion', deployed_service: 'deployed API', approved_bundle: 'approved bundle' };
+const MODE_LABELS = { bus: 'Bus', metro: 'Metro', rail: 'Train', cab: 'Cab' };
+
+function routeType(journey) {
+  const rides = journey.legs.filter((leg) => leg.type === 'ride');
+  const cab = rides.find((leg) => leg.mode === 'cab');
+  if (journey.profile === 'cab only') return `Direct ${cab?.mode_label?.toLowerCase() || 'cab'}`;
+  if (cab) return 'Cab + transit';
+  const modes = [...new Set(rides.map((leg) => leg.mode))];
+  return modes.length === 1 ? `${MODE_LABELS[modes[0]] || 'Transit'} route` : 'Transit connection';
+}
 
 /* A journey drawn like the route strip above metro doors: coloured runs, rings where you change. */
 export function RouteStrip({ journey, animate = false, height = 22 }) {
@@ -44,7 +54,6 @@ export function RouteStrip({ journey, animate = false, height = 22 }) {
 
 function Flags({ journey, budget }) {
   const out = [];
-  if (journey.tags.includes('recommended')) out.push(<span key="rec" className="flag rec">Recommended</span>);
   const words = journey.tags.filter((t) => !['recommended', 'over budget'].includes(t));
   if (words.length) out.push(<span key="w" className="flag-text">{words.map((w) => w[0].toUpperCase() + w.slice(1)).join(', ')}</span>);
   if (!journey.within_budget && budget != null) out.push(<span key="o" className="flag over">{inr(journey.fare_inr - budget)} over budget</span>);
@@ -54,18 +63,27 @@ function Flags({ journey, budget }) {
 
 export function OptionRow({ journey, selected, onSelect, budget, index }) {
   const rides = journey.legs.filter((l) => l.type === 'ride');
-  const hasCab = rides.some((l) => l.mode === 'cab');
+  const cabLegs = rides.filter((l) => l.mode === 'cab');
+  const hasCab = cabLegs.length > 0;
+  const routeLabel = routeType(journey);
+  const recommended = journey.tags.includes('recommended');
   const sourceNote = journey.uses_bus_model
     ? 'Includes an ML estimate on the supported bus segment'
     : hasCab
       ? (rides.every((l) => l.mode === 'cab') ? 'Indicative cab fare · pickup time assumed' : 'Timetables + cab estimates · fares indicative')
       : 'Timetable estimates · walking and waiting included';
   return (
-    <li className={`option ${selected ? 'selected' : ''} ${journey.within_budget ? '' : 'over'}`} style={{ '--option-index': index }}>
-      <button type="button" onClick={onSelect} aria-pressed={selected} aria-label={`Route ${index + 1}, ${journey.leave} to ${journey.arrive}, ${mins(journey.duration_min)}, ${inr(journey.fare_inr)}, ${plural(journey.vehicle_changes, 'change', 'changes')}, ${journey.co2_kg.toFixed(2)} kilograms of CO₂. View journey details.`}>
+    <li className={`option ${selected ? 'selected' : ''} ${recommended ? 'recommended' : ''} ${hasCab ? 'is-cab' : ''} ${journey.profile === 'cab only' ? 'direct-cab' : ''} ${journey.within_budget ? '' : 'over'}`} style={{ '--option-index': index }}>
+      <button type="button" onClick={onSelect} aria-pressed={selected} aria-label={`Route ${index + 1}, ${routeLabel}${recommended ? ', recommended' : ''}, ${journey.leave} to ${journey.arrive}, ${mins(journey.duration_min)}, ${inr(journey.fare_inr)}, ${plural(journey.vehicle_changes, 'change', 'changes')}, ${journey.co2_kg.toFixed(2)} kilograms of CO₂${!journey.within_budget && budget != null ? `, ${inr(journey.fare_inr - budget)} over budget` : ''}`}>
         <div className="option-heading">
-          <span className="option-number">Route {index + 1}</span>
-          {selected && <span className="option-state"><span className="option-check" aria-hidden="true">✓</span>Selected</span>}
+          <div className="option-heading-main">
+            <span className="option-mode-mark"><ModeIcon mode={hasCab ? 'cab' : rides[0]?.mode || 'walk'} width={20} height={20} /></span>
+            <div><span className="option-id">Route {String(index + 1).padStart(2, '0')}</span><strong className="option-number option-title">{routeLabel}</strong></div>
+          </div>
+          <div className="option-badges">
+            {recommended && <span className="flag rec"><SparkIcon width={12} height={12} />Recommended</span>}
+            {selected && <span className="option-state"><span className="option-check" aria-hidden="true">✓</span>Selected</span>}
+          </div>
         </div>
         <div className="opt-primary">
           <div className="opt-route-modes">
@@ -73,7 +91,7 @@ export function OptionRow({ journey, selected, onSelect, budget, index }) {
               {rides.map((l, i) => (
                 <span key={i} className="line-tag" style={{ '--c': l.color }}>
                   <ModeIcon mode={l.mode} width={14} height={14} />
-                  {l.mode === 'metro' ? l.route.replace(' Line', '') : l.mode === 'rail' ? `Train ${l.route.split(' ')[0]}` : l.mode === 'cab' ? l.mode_label : `Bus ${l.route.split(' ')[0]}`}
+                  {l.mode === 'metro' ? l.route.replace(' Line', '') : l.mode === 'rail' ? `Train ${l.route.split(' ')[0]}` : l.mode === 'cab' ? l.cab?.type_label || l.mode_label : `Bus ${l.route.split(' ')[0]}`}
                 </span>
               ))}
             </div>
@@ -81,7 +99,7 @@ export function OptionRow({ journey, selected, onSelect, budget, index }) {
           </div>
           <div className="opt-price">
             <strong className={`opt-fare opt-price-value ${journey.within_budget ? '' : 'bad'}`}>{inr(journey.fare_inr)}</strong>
-            <span className="opt-price-label">total fare</span>
+            <span className="opt-price-label">{hasCab ? 'estimated fare' : 'total fare'}</span>
           </div>
         </div>
         <div className="opt-timing">
@@ -94,6 +112,17 @@ export function OptionRow({ journey, selected, onSelect, budget, index }) {
           <span className="opt-fact"><ModeIcon mode="walk" width={13} height={13} /><span className="opt-fact-value">{journey.walk_m} m walk</span></span>
           <span className="opt-fact opt-co2"><LeafIcon width={13} height={13} /><span className="opt-fact-value">{journey.co2_kg.toFixed(2)} kg CO₂</span></span>
         </div>
+        {cabLegs.map((leg, i) => (
+          <div key={i} className="cab-option-facts">
+            <span className="cab-option-icon"><ModeIcon mode="cab" width={16} height={16} /></span>
+            <div className="cab-option-metrics">
+              <span><span className="cab-metric-label">Pickup</span><strong>~{mins(leg.wait_minutes)}</strong></span>
+              <span><span className="cab-metric-label">Drive</span><strong>~{mins(leg.minutes)}</strong></span>
+              <span><span className="cab-metric-label">Distance</span><strong>{leg.distance_km} km</strong></span>
+              {rides.length > 1 && <span><span className="cab-metric-label">Cab fare</span><strong>{inr(leg.fare_inr)}</strong></span>}
+            </div>
+          </div>
+        ))}
         <div className="opt-source"><InfoIcon width={12} height={12} /><span>{sourceNote}</span></div>
       </button>
     </li>
@@ -134,10 +163,10 @@ export function Itinerary({ journey, destination }) {
   const legs = journey.legs;
   const last = legs[legs.length - 1];
   return (
-    <details className="journey-details" key={journey.id}>
+    <details className="journey-details" key={journey.id} open={journey.modes.includes('cab')}>
       <summary className="journey-disclosure">
         <span className="journey-disclosure-icon"><ModeIcon mode={journey.modes?.[0] || 'walk'} width={21} height={21} /></span>
-        <span className="journey-disclosure-copy"><strong>Journey details</strong><span className="journey-disclosure-meta">{plural(legs.length, 'step', 'steps')} · {journey.leave}–{journey.arrive} · {mins(journey.duration_min)}</span></span>
+        <span className="journey-disclosure-copy"><strong>{journey.modes.includes('cab') ? `${routeType(journey)} itinerary` : 'Journey details'}</strong><span className="journey-disclosure-meta">{plural(legs.length, 'step', 'steps')} · {journey.leave}–{journey.arrive} · {mins(journey.duration_min)}</span></span>
         <ChevronDownIcon className="journey-disclosure-chevron" width={20} height={20} />
       </summary>
       <ol className="itin" aria-label="Detailed journey instructions">
@@ -292,7 +321,7 @@ export function RoutePicker({ journeys, selected, onSelect }) {
     <div className="picker" role="group" aria-label="Choose a route">
       {journeys.map((j, i) => (
         <button key={j.id} type="button" aria-pressed={i === selected} className={i === selected ? 'on' : ''} onClick={() => onSelect(i)}>
-          <span className="pk-n">Route {i + 1}</span>
+          <span className="pk-n">Route {i + 1}<span className="pk-route-type">{routeType(j)}</span></span>
           <span className="pk-t pk-times">{j.leave}<span className="pk-arrow" aria-hidden="true">→</span>{j.arrive}</span>
           <span className="pk-f">{inr(j.fare_inr)}, {mins(j.duration_min)}</span>
           {j.tags.includes('recommended') && <span className="pk-rec">Recommended</span>}
