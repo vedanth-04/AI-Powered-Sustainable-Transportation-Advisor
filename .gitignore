@@ -78,7 +78,7 @@ outputs/*
 !outputs/README.md
 
 # Large Datasets & Storage Safeguards
-# Keep directory structure via README / .gitkeep, but ignore all raw/interim/processed data files.
+# Keep directory structure via README / .gitkeep and ignore dataset files by default.
 # Require a nonempty basename: Dulwich treats '*' as matching the parent slash.
 # '?*' preserves ignored children while keeping the parent discoverable by DVC.
 data/raw/?*
@@ -86,6 +86,19 @@ data/raw/?*
 !data/raw/.gitkeep
 !data/raw/*.dvc
 !data/raw/.gitignore
+
+# Allow the three pinned public transit timetable files.
+!data/raw/transit/
+data/raw/transit/?*
+!data/raw/transit/dmrc/
+!data/raw/transit/otd_bus/
+!data/raw/transit/rail/
+data/raw/transit/dmrc/?*
+data/raw/transit/otd_bus/?*
+data/raw/transit/rail/?*
+!data/raw/transit/dmrc/stop_times.txt
+!data/raw/transit/otd_bus/stop_times.txt
+!data/raw/transit/rail/schedules.json
 
 data/interim/?*
 !data/interim/README.md

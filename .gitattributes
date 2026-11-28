@@ -1,2 +1,7 @@
 # Preserve generated PDF bytes on Windows and other platforms.
 *.pdf binary
+
+# Preserve the checksums of the pinned raw timetables on checkout.
+/data/raw/transit/dmrc/stop_times.txt -text
+/data/raw/transit/otd_bus/stop_times.txt filter=lfs diff=lfs merge=lfs -text
+/data/raw/transit/rail/schedules.json -text
